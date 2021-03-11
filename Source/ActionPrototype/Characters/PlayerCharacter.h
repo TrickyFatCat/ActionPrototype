@@ -35,8 +35,6 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
-	const float DefaultArmLength = 600.f;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Components", meta=(AllowPrivateAccess = "true"))
 	USpringArmComponent* SpringArmComponent{nullptr};
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Components", meta=(AllowPrivateAccess = "true"))
@@ -46,7 +44,7 @@ private:
 	float CameraYawSensitivity{50.f};
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera Sensitivyty", meta=(AllowPrivateAccess = "true", ClampMin = "1.0"))
 	float CameraPitchSensitivity{50.f};
-	
+
 	void MoveForward(float AxisValue);
 	void MoveRight(float AxisValue);
 	void LookRight(float AxisValue);

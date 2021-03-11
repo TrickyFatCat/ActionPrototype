@@ -4,6 +4,7 @@
 #include "PlayerCharacter.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 APlayerCharacter::APlayerCharacter()
 {
@@ -12,13 +13,22 @@ APlayerCharacter::APlayerCharacter()
 	// Create and adjust Spring Arm
 	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("Spring Arm"));
 	SpringArmComponent->SetupAttachment(RootComponent);
-	SpringArmComponent->TargetArmLength = DefaultArmLength;
+	SpringArmComponent->TargetArmLength = 600.f;
 	SpringArmComponent->bUsePawnControlRotation = true;
 
 	// Create and setup Camera
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	CameraComponent->SetupAttachment(SpringArmComponent, USpringArmComponent::SocketName);
 	CameraComponent->bUsePawnControlRotation = false;
+
+	// Player character must not rotate with camera
+	bUseControllerRotationYaw = false;
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationRoll = false;
+
+	// Configure player character movement
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCharacterMovement()->RotationRate = FRotator(0.f, 540.f, 0.f);
 }
 
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -31,12 +41,17 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAxis("LookUp", this, &APlayerCharacter::AddControllerPitchInput);
 }
 
+void APlayerCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+}
+
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
 
-bool APlayerCharacter::SetCameraYawSensitivity(float NewSensitivity)
+bool APlayerCharacter::SetCameraYawSensitivity(const float NewSensitivity)
 {
 	if (NewSensitivity <= 0.f)
 	{
@@ -64,25 +79,25 @@ bool APlayerCharacter::SetCameraPitchSensitivity(const float NewSensitivity)
 	return true;
 }
 
-void APlayerCharacter::BeginPlay()
-{
-	Super::BeginPlay();
-}
-
 void APlayerCharacter::MoveForward(float AxisValue)
 {
-	if (AxisValue != 0)
+	if (Controller != nullptr && AxisValue != 0)
 	{
-		AddMovementInput(GetActorForwardVector(), AxisValue);
+		const FRotator ControllerRotation = Controller->GetControlRotation();
+		const FRotator NewYawRotation(0.f, ControllerRotation.Yaw, 0.f);
+		const FVector MoveDirection = FRotationMatrix(NewYawRotation).GetUnitAxis(EAxis::X);
+		AddMovementInput(MoveDirection, AxisValue);
 	}
 }
 
 void APlayerCharacter::MoveRight(float AxisValue)
-{
-	if (AxisValue != 0.f)
-	{
-		AddMovementInput(GetActorRightVector(), AxisValue);
-	}
+{if (Controller != nullptr && AxisValue != 0)
+ 	{
+ 		const FRotator ControllerRotation = Controller->GetControlRotation();
+ 		const FRotator NewYawRotation(0.f, ControllerRotation.Yaw, 0.f);
+ 		const FVector MoveDirection = FRotationMatrix(NewYawRotation).GetUnitAxis(EAxis::Y);
+ 		AddMovementInput(MoveDirection, AxisValue);
+ 	}
 }
 
 void APlayerCharacter::LookRight(float AxisValue)
