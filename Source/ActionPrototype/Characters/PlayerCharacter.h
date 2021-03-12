@@ -42,7 +42,7 @@ private:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera Sensitivity", meta=(AllowPrivateAccess = "true", ClampMin = "1.0"))
 	float CameraYawSensitivity{50.f};
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera Sensitivyty", meta=(AllowPrivateAccess = "true", ClampMin = "1.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera Sensitivity", meta=(AllowPrivateAccess = "true", ClampMin = "1.0"))
 	float CameraPitchSensitivity{50.f};
 
 	void MoveForward(float AxisValue);

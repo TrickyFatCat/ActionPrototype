@@ -91,13 +91,14 @@ void APlayerCharacter::MoveForward(float AxisValue)
 }
 
 void APlayerCharacter::MoveRight(float AxisValue)
-{if (Controller != nullptr && AxisValue != 0)
- 	{
- 		const FRotator ControllerRotation = Controller->GetControlRotation();
- 		const FRotator NewYawRotation(0.f, ControllerRotation.Yaw, 0.f);
- 		const FVector MoveDirection = FRotationMatrix(NewYawRotation).GetUnitAxis(EAxis::Y);
- 		AddMovementInput(MoveDirection, AxisValue);
- 	}
+{
+	if (Controller != nullptr && AxisValue != 0)
+	{
+		const FRotator ControllerRotation = Controller->GetControlRotation();
+		const FRotator NewYawRotation(0.f, ControllerRotation.Yaw, 0.f);
+		const FVector MoveDirection = FRotationMatrix(NewYawRotation).GetUnitAxis(EAxis::Y);
+		AddMovementInput(MoveDirection, AxisValue);
+	}
 }
 
 void APlayerCharacter::LookRight(float AxisValue)
