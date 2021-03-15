@@ -32,8 +32,11 @@ void AFloorSwitch::BeginPlay()
 	TriggerVolume->OnComponentEndOverlap.AddDynamic(this, &AFloorSwitch::TriggerOverlapEnd);
 
 	PressedTimerDelegate.BindUFunction(this, FName("ChangeStateTo"), EFloorSwitchState::Active);
-	TransitionTimerDelegate.BindUFunction(this, FName("ChangeStateTo"), TargetSwitchState);
+	
+
+	InitialMeshLocation = SwitchMesh->GetComponentLocation();
 }
+
 
 void AFloorSwitch::Tick(float DeltaTime)
 {
@@ -115,6 +118,26 @@ int32 AFloorSwitch::DecreaseActivationNumber(const int32 Amount)
 	return ActivationNumber;
 }
 
+float AFloorSwitch::SetTransitionTime(const float NewTime)
+{
+	OnTransitionTimeChanged();
+	return TransitionTime = FMath::Abs(NewTime);
+}
+
+float AFloorSwitch::CalculatePlayRate() const
+{
+	return 1 / TransitionTime;
+}
+
+void AFloorSwitch::UpdateButtonLocation(float OffsetX, float OffsetY, float OffsetZ)
+{
+	FVector NewLocation = InitialMeshLocation;
+	NewLocation.X += OffsetX;
+	NewLocation.Y += OffsetY;
+	NewLocation.Z += OffsetZ;
+	SwitchMesh->SetWorldLocation(NewLocation);
+}
+
 void AFloorSwitch::TriggerOverlapBegin_Implementation(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                                                       UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
                                                       bool bFromSweep,
@@ -125,12 +148,13 @@ void AFloorSwitch::TriggerOverlapBegin_Implementation(UPrimitiveComponent* Overl
 		return;
 	}
 
-	if (CurrentSwitchState == EFloorSwitchState::Transition)
+	if (CurrentSwitchState == EFloorSwitchState::Transition && bCanTransitionBeReverted)
 	{
 		RevertTransition();
 		return;
 	}
-	else if (bUseTimedTransition)
+
+	if (bUseTimedTransition && CurrentSwitchState != EFloorSwitchState::Transition)
 	{
 		StartTransition();
 		return;
@@ -142,15 +166,24 @@ void AFloorSwitch::TriggerOverlapBegin_Implementation(UPrimitiveComponent* Overl
 void AFloorSwitch::TriggerOverlapEnd_Implementation(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                                                     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	if (CurrentSwitchState == EFloorSwitchState::Transition)
+	if (CurrentSwitchState == EFloorSwitchState::Transition && bCanTransitionBeReverted)
 	{
 		RevertTransition();
 		return;
 	}
 
-	if (bIsPressedTemporary && ActivationNumber > 0)
+	if (ActivationNumber > 0)
 	{
-		GetWorld()->GetTimerManager().SetTimer(PressedTimerHandle, PressedTimerDelegate, PressedDuration, false);
+		if (bIsPressedTemporary)
+		{
+			GetWorld()->GetTimerManager().SetTimer(PressedTimerHandle, PressedTimerDelegate, PressedDuration, false);
+			return;
+		}
+
+		if (CurrentSwitchState != EFloorSwitchState::Transition)
+		{
+			StartTransition();
+		}
 		return;
 	}
 
@@ -191,18 +224,28 @@ void AFloorSwitch::ChangeStateTo(const EFloorSwitchState NewState)
 	case EFloorSwitchState::Disabled:
 		OnSwitchDisabled();
 		OnFloorSwitchDisabled.Broadcast();
+	case EFloorSwitchState::Transition:
+		OnSwitchTransitionStarted();
+		OnFloorSwitchTransitionStarted.Broadcast();
+		break;
 	default: ;
 	}
 }
 
 void AFloorSwitch::StartTransition()
 {
-	CurrentSwitchState = EFloorSwitchState::Transition;
-	TargetSwitchState = EFloorSwitchState::Pressed;
+	if (TargetSwitchState == EFloorSwitchState::Active)
+	{
+		TargetSwitchState = EFloorSwitchState::Pressed;
+	}
+	else
+	{
+		TargetSwitchState = EFloorSwitchState::Active;
+	}
+	ChangeStateTo(EFloorSwitchState::Transition);
+	TransitionTimerDelegate.BindUFunction(this, FName("ChangeStateTo"), TargetSwitchState);
 	GetWorld()->GetTimerManager().SetTimer(TransitionTimerHandle, TransitionTimerDelegate, TransitionTime,
 	                                       false);
-	OnSwitchTransitionStarted();
-	OnFloorSwitchTransitionStarted.Broadcast();
 }
 
 void AFloorSwitch::RevertTransition()
@@ -215,6 +258,7 @@ void AFloorSwitch::RevertTransition()
 	{
 		TargetSwitchState = EFloorSwitchState::Active;
 	}
+	TransitionTimerDelegate.BindUFunction(this, FName("ChangeStateTo"), TargetSwitchState);
 
 	// TODO add delay if IsPressedTemporary == true
 	// TODO add different time for transition to Pressed and transition to Active

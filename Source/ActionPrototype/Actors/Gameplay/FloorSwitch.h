@@ -96,6 +96,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Floor Switch")
 	int32 DecreaseActivationNumber(const int32 Amount);
 
+	UFUNCTION(BlueprintCallable, Category="Floor Switch")
+	float SetTransitionTime(const float NewTime);
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -125,6 +128,15 @@ protected:
 	void OnSwitchTransitionStarted();
 	UFUNCTION(BlueprintImplementableEvent, Category="Floor Switch")
 	void OnSwitchTransitionReverted();
+	UFUNCTION(BlueprintImplementableEvent, Category="Floor Switch")
+	void OnTransitionTimeChanged();
+
+	UFUNCTION(BlueprintPure, Category="Floor Switch")
+	float CalculatePlayRate() const;
+	
+	UFUNCTION(BlueprintCallable, Category="Floor Switch")
+	void UpdateButtonLocation(float OffsetX = 0.f, float OffsetY = 0.f, float OffsetZ = 0.f);
+	
 
 private:
 	// COMPONENTS
@@ -134,6 +146,9 @@ private:
 	UStaticMeshComponent* SwitchMesh{nullptr};
 
 	// PROPERTIES
+	UPROPERTY(BlueprintReadOnly, Category="Floor Switch", meta=(AllowPrivateAccess="true"))
+	FVector InitialMeshLocation{FVector::ZeroVector};
+	
 	/* If true, switch can be pressed limited number of times until being disabled */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Floor Switch", meta = (AllowPrivateAccess = "true"))
 	bool bIsActivationLimited{false};
@@ -159,11 +174,14 @@ private:
 
 	/* Enables transition of a floor switch over time */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Floor Switch", meta=(AllowPrivateAccess = "true"))
-	bool bUseTimedTransition{false};
+	bool bUseTimedTransition{true};
 	/* Determines time of transition between Active and Pressed states. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Floor Switch",
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Floor Switch",
 		meta=(AllowPrivateAccess = "true", ClampMin = "0.0", EditCondition="bUseTimedTransition"))
 	float TransitionTime{5.f};
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Floor Switch", meta=(AllowPrivateAccess="true", EditCondition="bUseTimedTransition"))
+	bool bCanTransitionBeReverted{false};
+	
 
 	/* Initial state of the switch on BeginPlay */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Floor Switch|States", meta = (AllowPrivateAccess = "true"))
@@ -194,3 +212,5 @@ private:
 	UFUNCTION()
 	void RevertTransition();
 };
+
+
