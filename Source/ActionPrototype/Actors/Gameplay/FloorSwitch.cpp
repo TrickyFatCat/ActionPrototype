@@ -48,7 +48,6 @@ void AFloorSwitch::LockFloorSwitch()
 	}
 
 	ChangeStateTo(EFloorSwitchState::Locked);
-	OnSwitchLocked.Broadcast();
 }
 
 void AFloorSwitch::UnlockFloorSwitch()
@@ -67,7 +66,8 @@ void AFloorSwitch::UnlockFloorSwitch()
 		CurrentSwitchState = PreviousSwitchState;
 	}
 
-	OnSwitchUnlocked.Broadcast();
+	OnSwitchUnlocked();
+	OnFloorSwitchUnlocked.Broadcast();
 }
 
 void AFloorSwitch::DisableFloorSwitch()
@@ -99,7 +99,8 @@ void AFloorSwitch::EnableFloorSwitch()
 	TriggerVolume->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	SetActorTickEnabled(true);
 	CurrentSwitchState = EFloorSwitchState::Active;
-	OnSwitchEnabled.Broadcast();
+	OnSwitchEnabled();
+	OnFloorSwitchEnabled.Broadcast();
 }
 
 int32 AFloorSwitch::IncreaseActivationNumber(const int32 Amount)
@@ -164,10 +165,12 @@ void AFloorSwitch::ChangeStateTo(const EFloorSwitchState NewState)
 	switch (NewState)
 	{
 	case EFloorSwitchState::Active:
-		OnSwitchActive.Broadcast();
+		OnSwitchActivated();
+		OnFloorSwitchActive.Broadcast();
 		break;
 	case EFloorSwitchState::Pressed:
-		OnSwitchPressed.Broadcast();
+		OnSwitchPressed();
+		OnFloorSwitchPressed.Broadcast();
 
 		if (bIsActivationLimited)
 		{
@@ -182,10 +185,12 @@ void AFloorSwitch::ChangeStateTo(const EFloorSwitchState NewState)
 		}
 		break;
 	case EFloorSwitchState::Locked:
-		OnSwitchLocked.Broadcast();
+		OnSwitchLocked();
+		OnFloorSwitchLocked.Broadcast();
 		break;
 	case EFloorSwitchState::Disabled:
-		OnSwitchDisabled.Broadcast();
+		OnSwitchDisabled();
+		OnFloorSwitchDisabled.Broadcast();
 	default: ;
 	}
 }
@@ -196,7 +201,8 @@ void AFloorSwitch::StartTransition()
 	TargetSwitchState = EFloorSwitchState::Pressed;
 	GetWorld()->GetTimerManager().SetTimer(TransitionTimerHandle, TransitionTimerDelegate, TransitionTime,
 	                                       false);
-	OnSwitchTransitionStarted.Broadcast();
+	OnSwitchTransitionStarted();
+	OnFloorSwitchTransitionStarted.Broadcast();
 }
 
 void AFloorSwitch::RevertTransition()
@@ -216,5 +222,6 @@ void AFloorSwitch::RevertTransition()
 	GetWorld()->GetTimerManager().ClearTimer(TransitionTimerHandle);
 	GetWorld()->GetTimerManager().
 	            SetTimer(TransitionTimerHandle, TransitionTimerDelegate, NewTransitionTime, false);
-	OnSwitchTransitionReverted.Broadcast();
+	OnSwitchTransitionReverted();
+	OnFloorSwitchTransitionReverted.Broadcast();
 }

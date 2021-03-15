@@ -51,27 +51,30 @@ public:
 	AFloorSwitch();
 	virtual void Tick(float DeltaTime) override;
 
-	/* Called when the switch become pressed */
+	/* Called when a floor switch become pressed */
 	UPROPERTY(BlueprintAssignable, Category="Floor Switch|Delegates")
-	FOnSwitchPressed OnSwitchPressed;
+	FOnSwitchPressed OnFloorSwitchPressed;
+	/* Called when a floor switch enters Active state */
 	UPROPERTY(BlueprintAssignable, Category="Floor Switch|Delegates")
-	FOnSwitchActive OnSwitchActive;
-	/* Called when the switch become locked */
+	FOnSwitchActive OnFloorSwitchActive;
+	/* Called when a floor switch become locked */
 	UPROPERTY(BlueprintAssignable, Category="Floor Switch|Delegates")
-	FOnSwitchLocked OnSwitchLocked;
-	/* Called when the switch become unlocked */
+	FOnSwitchLocked OnFloorSwitchLocked;
+	/* Called when a floor switch become unlocked */
 	UPROPERTY(BlueprintAssignable, Category="Floor Switch|Delegates")
-	FOnSwitchUnlocked OnSwitchUnlocked;
-	/* Called when the switch become disabled */
+	FOnSwitchUnlocked OnFloorSwitchUnlocked;
+	/* Called when a floor switch become disabled */
 	UPROPERTY(BlueprintAssignable, Category="Floor Switch|Delegates")
-	FOnSwitchDisabled OnSwitchDisabled;
-	/* Called when the switch become enabled */
+	FOnSwitchDisabled OnFloorSwitchDisabled;
+	/* Called when a floor switch become enabled */
 	UPROPERTY(BlueprintAssignable, Category="Floor Switch|Delegates")
-	FOnSwitchEnabled OnSwitchEnabled;
+	FOnSwitchEnabled OnFloorSwitchEnabled;
+	/* Called when a floor switch starts its transition */
 	UPROPERTY(BlueprintAssignable, Category="Floor Switch|Delegates")
-	FOnSwitchTransitionStarted OnSwitchTransitionStarted;
+	FOnSwitchTransitionStarted OnFloorSwitchTransitionStarted;
+	/* Called when a floor switch reverts its transition */
 	UPROPERTY(BlueprintAssignable, Category="Floor Switch|Delegates")
-	FOnSwitchTransitionReverted OnSwitchTransitionReverted;
+	FOnSwitchTransitionReverted OnFloorSwitchTransitionReverted;
 
 	/* Locks floor switch. In lock state it can't be pressed. */
 	UFUNCTION(BlueprintCallable, Category="Floor Switch")
@@ -105,6 +108,23 @@ protected:
 	UFUNCTION(BlueprintNativeEvent)
 	void TriggerOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	                       UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	UFUNCTION(BlueprintImplementableEvent, Category="Floor Switch")
+	void OnSwitchActivated();
+	UFUNCTION(BlueprintImplementableEvent, Category="Floor Switch")
+	void OnSwitchPressed();
+	UFUNCTION(BlueprintImplementableEvent, Category="Floor Switch")
+	void OnSwitchLocked();
+	UFUNCTION(BlueprintImplementableEvent, Category="Floor Switch")
+	void OnSwitchUnlocked();
+	UFUNCTION(BlueprintImplementableEvent, Category="Floor Switch")
+	void OnSwitchDisabled();
+	UFUNCTION(BlueprintImplementableEvent, Category="Floor Switch")
+	void OnSwitchEnabled();
+	UFUNCTION(BlueprintImplementableEvent, Category="Floor Switch")
+	void OnSwitchTransitionStarted();
+	UFUNCTION(BlueprintImplementableEvent, Category="Floor Switch")
+	void OnSwitchTransitionReverted();
 
 private:
 	// COMPONENTS
