@@ -23,8 +23,6 @@ AFloorSwitch::AFloorSwitch()
 
 void AFloorSwitch::BeginPlay()
 {
-	Super::BeginPlay();
-
 	PressesNumber = InitialPressesNumber;
 	CurrentSwitchState = InitialSwitchState;
 
@@ -32,8 +30,8 @@ void AFloorSwitch::BeginPlay()
 	TriggerVolume->OnComponentEndOverlap.AddDynamic(this, &AFloorSwitch::TriggerOverlapEnd);
 
 	InitialMeshLocation = SwitchMesh->GetComponentLocation();
+	Super::BeginPlay();
 }
-
 
 void AFloorSwitch::Tick(float DeltaTime)
 {
@@ -45,6 +43,11 @@ void AFloorSwitch::LockFloorSwitch()
 	if (CurrentSwitchState == EFloorSwitchState::Locked || CurrentSwitchState == EFloorSwitchState::Transition)
 	{
 		return;
+	}
+
+	if (GetWorld()->GetTimerManager().IsTimerActive(PressDelayHandle))
+	{
+		ClearPressDelayHandle();
 	}
 
 	ChangeStateTo(EFloorSwitchState::Locked);
@@ -143,9 +146,22 @@ void AFloorSwitch::TriggerOverlapBegin(
 		return;
 	}
 
-	if (CurrentSwitchState != EFloorSwitchState::Transition)
+	if (CurrentSwitchState == EFloorSwitchState::Active)
 	{
-		StartTransition();
+		if (PressDelay > 0.f)
+		{
+			GetWorld()->GetTimerManager().SetTimer(
+												   PressDelayHandle,
+												   this,
+												   &AFloorSwitch::StartTransition,
+												   PressDelay,
+												   false
+												  );
+		}
+		else
+		{
+			StartTransition();
+		}
 	}
 }
 
@@ -158,6 +174,17 @@ void AFloorSwitch::TriggerOverlapEnd(
 {
 	bActorIsInTrigger = false;
 
+	if (CurrentSwitchState == EFloorSwitchState::Locked)
+	{
+		return;
+	}
+
+	if (GetWorld()->GetTimerManager().IsTimerActive(PressDelayHandle))
+	{
+		ClearPressDelayHandle();
+		return;
+	}
+
 	if (CurrentSwitchState == EFloorSwitchState::Transition && bIsTransitionRevertible)
 	{
 		RevertTransition();
@@ -169,15 +196,16 @@ void AFloorSwitch::TriggerOverlapEnd(
 		return;
 	}
 
-	if (PressedDuration > 0.f && CurrentSwitchState == EFloorSwitchState::Pressed)
+	if (CurrentSwitchState == EFloorSwitchState::Pressed)
 	{
-		SetPressedTimer();
-		return;
-	}
-
-	if (CurrentSwitchState != EFloorSwitchState::Transition && PressedDuration <= 0.f)
-	{
-		StartTransition();
+		if (PressedDuration > 0.f)
+		{
+			SetPressedTimer();
+		}
+		else
+		{
+			StartTransition();
+		}
 	}
 }
 
@@ -280,10 +308,15 @@ void AFloorSwitch::RevertTransition()
 void AFloorSwitch::SetPressedTimer()
 {
 	GetWorld()->GetTimerManager().SetTimer(
-										   PressedTimerHandle,
+										   PressedDurationHandle,
 										   this,
 										   &AFloorSwitch::StartTransition,
 										   PressedDuration,
 										   false
 										  );
+}
+
+void AFloorSwitch::ClearPressDelayHandle()
+{
+	GetWorld()->GetTimerManager().ClearTimer(PressDelayHandle);
 }

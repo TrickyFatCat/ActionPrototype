@@ -169,12 +169,24 @@ private:
 		meta=(AllowPrivateAccess = "true", ClampMin = "0.0")
 	)
 	float TransitionTime{5.f};
+	UPROPERTY(BlueprintReadOnly, Category="Floor Switch", meta=(AllowPrivateAccess="true"))
+	FTimerHandle TransitionTimerHandle;
+	FTimerDelegate TransitionTimerDelegate;
 	/* Determines if Transition can be reverted */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Floor Switch", meta=(AllowPrivateAccess="true"))
 	bool bIsTransitionRevertible{false};
 
+	/* Determines the duration of changing the state from Active to Transition when an Actor steps into the trigger.
+	   If == 0.0 state changes immediately.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Floor Switch", meta=(AllowPrivateAccess = "true"))
+	float PressDelay{0.5f};
+	UPROPERTY(BlueprintReadOnly, Category="Floor Switch", meta=(AllowPrivateAccess="true"))
+	FTimerHandle PressDelayHandle;
+	void ClearPressDelayHandle();
+	
 	/* How long switch will stay in Pressed state after the player left the trigger.
-       If == 0.0
+       If == 0.0 state changes immediately.
     */
 	UPROPERTY(
 		EditAnywhere,
@@ -183,7 +195,10 @@ private:
 		meta = (AllowPrivateAccess = "true", ClampMin = "0.0")
 	)
 	float PressedDuration{5.f};
-
+	UPROPERTY(BlueprintReadOnly, Category="Floor Switch", meta=(AllowPrivateAccess = "true"))
+	FTimerHandle PressedDurationHandle;
+	void SetPressedTimer();
+	
 	/* If true, switch can be pressed limited number of times until being disabled. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Floor Switch", meta = (AllowPrivateAccess = "true"))
 	bool bLimitedPresses{false};
@@ -203,13 +218,6 @@ private:
 	)
 	int32 PressesNumber{InitialPressesNumber};
 
-	UPROPERTY(BlueprintReadOnly, Category="Floor Switch", meta=(AllowPrivateAccess = "true"))
-	FTimerHandle PressedTimerHandle;
-
-	UPROPERTY(BlueprintReadOnly, Category="Floor Switch", meta=(AllowPrivateAccess="true"))
-	FTimerHandle TransitionTimerHandle;
-	FTimerDelegate TransitionTimerDelegate;
-
 	// FUNCTIONS
 	UFUNCTION()
 	void ChangeStateTo(const EFloorSwitchState NewState);
@@ -218,5 +226,4 @@ private:
 	UFUNCTION()
 	void RevertTransition();
 
-	void SetPressedTimer();
 };
