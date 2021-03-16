@@ -102,16 +102,12 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Floor Switch")
-	bool bActorIsInTrigger{false};
-
 	// FUNCTIONS
-	UFUNCTION(BlueprintNativeEvent)
+	UFUNCTION()
 	void TriggerOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	                         UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
 	                         const FHitResult& SweepResult);
-
-	UFUNCTION(BlueprintNativeEvent)
+	UFUNCTION()
 	void TriggerOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	                       UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
@@ -151,14 +147,37 @@ private:
 	// PROPERTIES
 	UPROPERTY(BlueprintReadOnly, Category="Floor Switch", meta=(AllowPrivateAccess="true"))
 	FVector InitialMeshLocation{FVector::ZeroVector};
-	
+	UPROPERTY(BlueprintReadOnly, Category="Floor Switch", meta=(AllowPrivateAccess="true"))
+	bool bActorIsInTrigger{false};
+
+	/* Initial state of the switch on BeginPlay. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Floor Switch", meta = (AllowPrivateAccess = "true"))
+	EFloorSwitchState InitialSwitchState{EFloorSwitchState::Active};
+	/* Current switch state. */
+	UPROPERTY(BlueprintReadOnly, Category="Floor Switch|States", meta=(AllowPrivateAccess = "true"))
+	EFloorSwitchState CurrentSwitchState{EFloorSwitchState::Active};
+	/* Previous switch sate before locking. */
+	UPROPERTY(BlueprintReadOnly, Category="Floor Switch|States", meta=(AllowPrivateAccess = "true"))
+	EFloorSwitchState PreviousSwitchState;
+	/* Target state for transition. */
+	UPROPERTY(BlueprintReadOnly, Category="Floor Switch|States", meta=(AllowPrivateAccess="true"))
+	EFloorSwitchState TargetSwitchState;
+
 	/* Determines time of transition between Active and Pressed states. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Floor Switch",
 		meta=(AllowPrivateAccess = "true", ClampMin = "0.0"))
 	float TransitionTime{5.f};
+	/* Determines if Transition can be reverted */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Floor Switch", meta=(AllowPrivateAccess="true"))
-	bool bCanTransitionBeReverted{false};
-	
+	bool bIsTransitionRevertible{false};
+
+	/* How long switch will stay in Pressed state after the player left the trigger.
+       If == 0.0
+    */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Floor Switch",
+		meta = (AllowPrivateAccess = "true", ClampMin = "0.0"))
+	float PressedDuration{5.f};
+
 	/* If true, switch can be pressed limited number of times until being disabled. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Floor Switch", meta = (AllowPrivateAccess = "true"))
 	bool bIsActivationLimited{false};
@@ -171,27 +190,9 @@ private:
 		meta=(AllowPrivateAccess = "true", EditCondition="bIsActivationLimited"))
 	int32 ActivationNumber{InitialActivationNumber};
 
-	/* How long switch will stay in Pressed state after player left the switch. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Floor Switch",
-		meta = (AllowPrivateAccess = "true", ClampMin = "0.0", EditCondition="bIsPressedTemporary"))
-	float PressedDuration{5.f};
-
-	/* Initial state of the switch on BeginPlay. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Floor Switch|States", meta = (AllowPrivateAccess = "true"))
-	EFloorSwitchState InitialSwitchState{EFloorSwitchState::Active};
-	/* Current switch state. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Floor Switch|States", meta = (AllowPrivateAccess = "true"))
-	EFloorSwitchState CurrentSwitchState{EFloorSwitchState::Active};
-	/* Previous switch sate before locking. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Floor Switch|States", meta = (AllowPrivateAccess = "true"))
-	EFloorSwitchState PreviousSwitchState;
-	/* Target state for transition. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Floor Switch|States", meta=(AllowPrivateAccess="true"))
-	EFloorSwitchState TargetSwitchState;
 
 	UPROPERTY(BlueprintReadOnly, Category="Floor Switch", meta=(AllowPrivateAccess = "true"))
 	FTimerHandle PressedTimerHandle;
-	FTimerDelegate PressedTimerDelegate;
 
 	UPROPERTY(BlueprintReadOnly, Category="Floor Switch", meta=(AllowPrivateAccess="true"))
 	FTimerHandle TransitionTimerHandle;
@@ -204,4 +205,6 @@ private:
 	void StartTransition();
 	UFUNCTION()
 	void RevertTransition();
+
+	void SetPressedTimer();
 };
