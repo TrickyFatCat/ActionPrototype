@@ -31,8 +31,8 @@ void AFloorSwitch::BeginPlay()
 	TriggerVolume->OnComponentBeginOverlap.AddDynamic(this, &AFloorSwitch::TriggerOverlapBegin);
 	TriggerVolume->OnComponentEndOverlap.AddDynamic(this, &AFloorSwitch::TriggerOverlapEnd);
 
-	PressedTimerDelegate.BindUFunction(this, FName("ChangeStateTo"), EFloorSwitchState::Active);
-	
+	PressedTimerDelegate.BindUFunction(this, FName("StartTransition"));
+
 
 	InitialMeshLocation = SwitchMesh->GetComponentLocation();
 }
@@ -80,6 +80,7 @@ void AFloorSwitch::DisableFloorSwitch()
 		return;
 	}
 
+	bActorIsInTrigger = false;
 	TriggerVolume->OnComponentBeginOverlap.RemoveDynamic(this, &AFloorSwitch::TriggerOverlapBegin);
 	TriggerVolume->OnComponentEndOverlap.RemoveDynamic(this, &AFloorSwitch::TriggerOverlapEnd);
 	TriggerVolume->SetGenerateOverlapEvents(false);
@@ -143,6 +144,8 @@ void AFloorSwitch::TriggerOverlapBegin_Implementation(UPrimitiveComponent* Overl
                                                       bool bFromSweep,
                                                       const FHitResult& SweepResult)
 {
+	bActorIsInTrigger = true;
+
 	if (CurrentSwitchState == EFloorSwitchState::Locked)
 	{
 		return;
@@ -154,40 +157,38 @@ void AFloorSwitch::TriggerOverlapBegin_Implementation(UPrimitiveComponent* Overl
 		return;
 	}
 
-	if (bUseTimedTransition && CurrentSwitchState != EFloorSwitchState::Transition)
+	if (CurrentSwitchState != EFloorSwitchState::Transition)
 	{
 		StartTransition();
-		return;
 	}
-
-	ChangeStateTo(EFloorSwitchState::Pressed);
 }
 
 void AFloorSwitch::TriggerOverlapEnd_Implementation(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                                                     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
+	bActorIsInTrigger = false;
+
 	if (CurrentSwitchState == EFloorSwitchState::Transition && bCanTransitionBeReverted)
 	{
 		RevertTransition();
 		return;
 	}
 
-	if (ActivationNumber > 0)
+	if (ActivationNumber <= 0)
 	{
-		if (bIsPressedTemporary)
-		{
-			GetWorld()->GetTimerManager().SetTimer(PressedTimerHandle, PressedTimerDelegate, PressedDuration, false);
-			return;
-		}
-
-		if (CurrentSwitchState != EFloorSwitchState::Transition)
-		{
-			StartTransition();
-		}
 		return;
 	}
 
-	ChangeStateTo(EFloorSwitchState::Active);
+	if (PressedDuration > 0.f && CurrentSwitchState == EFloorSwitchState::Pressed)
+	{
+		GetWorld()->GetTimerManager().SetTimer(PressedTimerHandle, PressedTimerDelegate, PressedDuration, false);
+		return;
+	}
+
+	if (CurrentSwitchState != EFloorSwitchState::Transition && PressedDuration <= 0.f)
+	{
+		StartTransition();
+	}
 }
 
 void AFloorSwitch::ChangeStateTo(const EFloorSwitchState NewState)
@@ -213,8 +214,20 @@ void AFloorSwitch::ChangeStateTo(const EFloorSwitchState NewState)
 			{
 				return;
 			}
-
+			
 			DisableFloorSwitch();
+			return;
+		}
+
+		if (PressedDuration > 0.f && !bActorIsInTrigger)
+		{
+			GetWorld()->GetTimerManager().SetTimer(PressedTimerHandle, PressedTimerDelegate, PressedDuration, false);
+			return;
+		}
+		
+		if (!bActorIsInTrigger)
+		{
+			StartTransition();
 		}
 		break;
 	case EFloorSwitchState::Locked:
@@ -228,7 +241,8 @@ void AFloorSwitch::ChangeStateTo(const EFloorSwitchState NewState)
 		OnSwitchTransitionStarted();
 		OnFloorSwitchTransitionStarted.Broadcast();
 		break;
-	default: ;
+	default: 
+		break;
 	}
 }
 
