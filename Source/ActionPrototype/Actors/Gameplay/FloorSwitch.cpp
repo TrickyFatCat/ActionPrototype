@@ -93,7 +93,7 @@ void AFloorSwitch::EnableFloorSwitch()
 	TriggerVolume->SetCollisionResponseToChannels(ECR_Ignore);
 	TriggerVolume->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	SetActorTickEnabled(true);
-	CurrentSwitchState = EFloorSwitchState::Active;
+	CurrentSwitchState = EFloorSwitchState::Idle;
 	OnSwitchEnabled();
 }
 
@@ -146,7 +146,7 @@ void AFloorSwitch::TriggerOverlapBegin(
 		return;
 	}
 
-	if (CurrentSwitchState == EFloorSwitchState::Active)
+	if (CurrentSwitchState == EFloorSwitchState::Idle)
 	{
 		if (PressDelay > 0.f)
 		{
@@ -217,8 +217,8 @@ void AFloorSwitch::ChangeStateTo(const EFloorSwitchState NewState)
 
 	switch (NewState)
 	{
-		case EFloorSwitchState::Active:
-			OnSwitchActivated();
+		case EFloorSwitchState::Idle:
+			OnSwitchBecomesIdle();
 			break;
 		case EFloorSwitchState::Pressed:
 			OnSwitchPressed();
@@ -267,13 +267,13 @@ void AFloorSwitch::ChangeStateTo(const EFloorSwitchState NewState)
 
 void AFloorSwitch::StartTransition()
 {
-	if (TargetSwitchState == EFloorSwitchState::Active)
+	if (CurrentSwitchState == EFloorSwitchState::Idle)
 	{
 		TargetSwitchState = EFloorSwitchState::Pressed;
 	}
 	else
 	{
-		TargetSwitchState = EFloorSwitchState::Active;
+		TargetSwitchState = EFloorSwitchState::Idle;
 	}
 	ChangeStateTo(EFloorSwitchState::Transition);
 	TransitionTimerDelegate.BindUFunction(this, FName("ChangeStateTo"), TargetSwitchState);
@@ -287,13 +287,13 @@ void AFloorSwitch::StartTransition()
 
 void AFloorSwitch::RevertTransition()
 {
-	if (TargetSwitchState == EFloorSwitchState::Active)
+	if (TargetSwitchState == EFloorSwitchState::Idle)
 	{
 		TargetSwitchState = EFloorSwitchState::Pressed;
 	}
 	else
 	{
-		TargetSwitchState = EFloorSwitchState::Active;
+		TargetSwitchState = EFloorSwitchState::Idle;
 	}
 	TransitionTimerDelegate.BindUFunction(this, FName("ChangeStateTo"), TargetSwitchState);
 

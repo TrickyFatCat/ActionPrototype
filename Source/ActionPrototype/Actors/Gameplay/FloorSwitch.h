@@ -14,15 +14,15 @@ class UStaticMeshComponent;
 UENUM(BlueprintType)
 enum class EFloorSwitchState : uint8
 {
-	/* In active sate floor switch can be pressed */
-	Active UMETA(DisplayName = "Active"),
-	/* In Pressed state switch is pressed */
+	/* In this state a switch is pressed */
 	Pressed UMETA(DisplayName = "Pressed"),
-	/* In Locked state switch generate overlap events and work as intended, but can't be pressed */
+	/* In this state switch is ready to be press */
+	Idle UMETA(DisplayName = "Idle"),
+	/* In this state a switch generates overlap events and works as intended, but can't be pressed */
 	Locked UMETA(DisplayName = "Locked"),
-	/* In this state the floor switch is transitioning from Active to Pressed */
+	/* In this state a switch is transitioning from Active to Pressed */
 	Transition UMETA(DisplayName = "Transition"),
-	/* In Disabled state switch doesn't generate overlap events and ignore everything */
+	/* In this state a switch doesn't generate overlap events and ignore everything */
 	Disabled UMETA(DisplayName = "Disabled")
 };
 
@@ -103,7 +103,7 @@ protected:
 
 	/* Called when a switch changes state to Active */
 	UFUNCTION(BlueprintImplementableEvent, Category="Floor Switch")
-	void OnSwitchActivated();
+	void OnSwitchBecomesIdle();
 	/* Called when a switch changes state to Pressed */
 	UFUNCTION(BlueprintImplementableEvent, Category="Floor Switch")
 	void OnSwitchPressed();
@@ -150,10 +150,10 @@ private:
 
 	/* Initial state of the switch on BeginPlay. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Floor Switch", meta = (AllowPrivateAccess = "true"))
-	EFloorSwitchState InitialSwitchState{EFloorSwitchState::Active};
+	EFloorSwitchState InitialSwitchState{EFloorSwitchState::Idle};
 	/* Current switch state. */
 	UPROPERTY(BlueprintReadOnly, Category="Floor Switch|States", meta=(AllowPrivateAccess = "true"))
-	EFloorSwitchState CurrentSwitchState{EFloorSwitchState::Active};
+	EFloorSwitchState CurrentSwitchState{EFloorSwitchState::Idle};
 	/* Previous switch sate before locking. */
 	UPROPERTY(BlueprintReadOnly, Category="Floor Switch|States", meta=(AllowPrivateAccess = "true"))
 	EFloorSwitchState PreviousSwitchState;
@@ -184,7 +184,7 @@ private:
 	UPROPERTY(BlueprintReadOnly, Category="Floor Switch", meta=(AllowPrivateAccess="true"))
 	FTimerHandle PressDelayHandle;
 	void ClearPressDelayHandle();
-	
+
 	/* How long switch will stay in Pressed state after the player left the trigger.
        If == 0.0 state changes immediately.
     */
@@ -198,7 +198,7 @@ private:
 	UPROPERTY(BlueprintReadOnly, Category="Floor Switch", meta=(AllowPrivateAccess = "true"))
 	FTimerHandle PressedDurationHandle;
 	void SetPressedTimer();
-	
+
 	/* If true, switch can be pressed limited number of times until being disabled. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Floor Switch", meta = (AllowPrivateAccess = "true"))
 	bool bLimitedPresses{false};
@@ -225,5 +225,4 @@ private:
 	void StartTransition();
 	UFUNCTION()
 	void RevertTransition();
-
 };
