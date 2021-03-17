@@ -26,6 +26,8 @@ enum class EFloorSwitchState : uint8
 	Disabled UMETA(DisplayName = "Disabled")
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnSwitchIdle);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnSwitchPressed);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnSwitchLocked);
@@ -43,6 +45,9 @@ public:
 	AFloorSwitch();
 	virtual void Tick(float DeltaTime) override;
 
+	/* Called when a switch changes its state to Idle */
+	UPROPERTY(BlueprintAssignable, Category="Floor Switch|Delegates")
+	FOnSwitchIdle OnFloorSwitchIdle;
 	/* Called when a switch changes its state to Pressed */
 	UPROPERTY(BlueprintAssignable, Category="Floor Switch|Delegates")
 	FOnSwitchPressed OnFloorSwitchPressed;
@@ -103,28 +108,28 @@ protected:
 
 	/* Called when a switch changes state to Active */
 	UFUNCTION(BlueprintImplementableEvent, Category="Floor Switch")
-	void OnSwitchBecomesIdle();
+	void OnIdle();
 	/* Called when a switch changes state to Pressed */
 	UFUNCTION(BlueprintImplementableEvent, Category="Floor Switch")
-	void OnSwitchPressed();
+	void OnPressed();
 	/* Called when a switch changes state to Locked */
 	UFUNCTION(BlueprintImplementableEvent, Category="Floor Switch")
-	void OnSwitchLocked();
+	void OnLocked();
 	/* Called in UnlockFloorSwitch function */
 	UFUNCTION(BlueprintImplementableEvent, Category="Floor Switch")
-	void OnSwitchUnlocked();
+	void OnUnlocked();
 	/* Called when a switch changes state to Disabled*/
 	UFUNCTION(BlueprintImplementableEvent, Category="Floor Switch")
-	void OnSwitchDisabled();
+	void OnDisabled();
 	/* Called in EnableFloorSwitch function */
 	UFUNCTION(BlueprintImplementableEvent, Category="Floor Switch")
-	void OnSwitchEnabled();
+	void OnEnabled();
 	/* Called when a switch changes state to Transition*/
 	UFUNCTION(BlueprintImplementableEvent, Category="Floor Switch")
-	void OnSwitchTransitionStarted();
+	void OnTransitionStarted();
 	/* Called when the transition reverted */
 	UFUNCTION(BlueprintImplementableEvent, Category="Floor Switch")
-	void OnSwitchTransitionReverted();
+	void OnTransitionReverted();
 	/* Called in SetTransitionTime function */
 	UFUNCTION(BlueprintImplementableEvent, Category="Floor Switch")
 	void OnTransitionTimeChanged();

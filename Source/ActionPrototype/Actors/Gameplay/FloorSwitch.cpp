@@ -61,7 +61,7 @@ void AFloorSwitch::UnlockFloorSwitch(const EFloorSwitchState NewState)
 	}
 
 	ChangeStateTo(NewState);
-	OnSwitchUnlocked();
+	OnUnlocked();
 }
 
 void AFloorSwitch::DisableFloorSwitch()
@@ -94,7 +94,7 @@ void AFloorSwitch::EnableFloorSwitch()
 	TriggerVolume->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	SetActorTickEnabled(true);
 	CurrentSwitchState = EFloorSwitchState::Idle;
-	OnSwitchEnabled();
+	OnEnabled();
 }
 
 int32 AFloorSwitch::IncreasePressesNumber(const int32 Amount)
@@ -218,10 +218,11 @@ void AFloorSwitch::ChangeStateTo(const EFloorSwitchState NewState)
 	switch (NewState)
 	{
 		case EFloorSwitchState::Idle:
-			OnSwitchBecomesIdle();
+			OnIdle();
+			OnFloorSwitchIdle.Broadcast();
 			break;
 		case EFloorSwitchState::Pressed:
-			OnSwitchPressed();
+			OnPressed();
 			OnFloorSwitchPressed.Broadcast();
 
 			if (bLimitedPresses)
@@ -250,14 +251,14 @@ void AFloorSwitch::ChangeStateTo(const EFloorSwitchState NewState)
 			}
 			break;
 		case EFloorSwitchState::Locked:
-			OnSwitchLocked();
+			OnLocked();
 			OnFloorSwitchLocked.Broadcast();
 			break;
 		case EFloorSwitchState::Disabled:
-			OnSwitchDisabled();
+			OnDisabled();
 			break;
 		case EFloorSwitchState::Transition:
-			OnSwitchTransitionStarted();
+			OnTransitionStarted();
 			OnFloorSwitchTransitionStarted.Broadcast();
 			break;
 		default:
@@ -301,7 +302,7 @@ void AFloorSwitch::RevertTransition()
 	const float NewTransitionTime = GetWorld()->GetTimerManager().GetTimerElapsed(TransitionTimerHandle);
 	GetWorld()->GetTimerManager().ClearTimer(TransitionTimerHandle);
 	GetWorld()->GetTimerManager().SetTimer(TransitionTimerHandle, TransitionTimerDelegate, NewTransitionTime, false);
-	OnSwitchTransitionReverted();
+	OnTransitionReverted();
 	OnFloorSwitchTransitionReverted.Broadcast();
 }
 
