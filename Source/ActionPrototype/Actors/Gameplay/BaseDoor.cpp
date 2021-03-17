@@ -101,6 +101,36 @@ bool ABaseDoor::EnableDoor(const EDoorState NewState)
 	return true;
 }
 
+void ABaseDoor::SetDoorLocation(
+	UStaticMeshComponent* DoorMesh,
+	const FVector InitialLocation,
+	const FVector LocationOffset)
+{
+	if (DoorMesh == nullptr)
+	{
+		return;
+	}
+	
+	FVector NewLocation = InitialLocation;
+	NewLocation += LocationOffset;
+	DoorMesh->SetWorldLocation(NewLocation);
+}
+
+void ABaseDoor::SetDoorRotation(
+	UStaticMeshComponent* DoorMesh,
+	const FRotator InitialRotation,
+	const FRotator RotationOffset)
+{
+	if (DoorMesh == nullptr)
+	{
+		return;
+	}
+
+	FRotator NewRotation = InitialRotation;
+	NewRotation += RotationOffset;
+	DoorMesh->SetWorldRotation(NewRotation);
+}
+
 void ABaseDoor::ChangeStateTo(const EDoorState NewState)
 {
 	PreviousState = CurrentState;

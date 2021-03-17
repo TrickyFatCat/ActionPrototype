@@ -11,8 +11,8 @@ class UStaticMeshComponent;
 UENUM(BlueprintType)
 enum class EDoorState : uint8
 {
-	Closed UMETA(DisplayName="Closed"),
 	Opened UMETA(DisplayName="Opened"),
+	Closed UMETA(DisplayName="Closed"),
 	Locked UMETA(DisplayName="Locked"),
 	Transition UMETA(DisplayName="Transition"),
 	Disabled UMETA(DisplayName="Disabled")
@@ -80,7 +80,12 @@ protected:
 	void OnTransitionStarted();
 	UFUNCTION(BlueprintImplementableEvent, Category="Door")
 	void OnTransitionReverted();
-
+	
+	UFUNCTION(BlueprintCallable, Category="Door")
+	void SetDoorLocation(UStaticMeshComponent* DoorMesh, const FVector InitialLocation, const FVector LocationOffset);
+	UFUNCTION(BlueprintCallable, Category="Door")
+	void SetDoorRotation(UStaticMeshComponent* DoorMesh, const FRotator InitialRotation, const FRotator RotationOffset);
+	
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Door", meta=(AllowPrivateAccess = "true"))
 	EDoorState InitialState{EDoorState::Closed};
