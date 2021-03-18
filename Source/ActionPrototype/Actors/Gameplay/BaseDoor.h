@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
 #include "GameFramework/Actor.h"
 #include "BaseDoor.generated.h"
 
@@ -49,6 +50,8 @@ public:
 	bool DisableDoor();
 	UFUNCTION(BlueprintCallable, Category="Door")
 	bool EnableDoor(const EDoorState NewState);
+	UFUNCTION(BlueprintCallable, Category="Door")
+	void SetTransitionDuration(const float NewDuration);
 
 	UPROPERTY(BlueprintAssignable, Category="Door|Delegates")
 	FOnDoorClosed OnDoorClosed;
@@ -80,12 +83,24 @@ protected:
 	void OnTransitionStarted();
 	UFUNCTION(BlueprintImplementableEvent, Category="Door")
 	void OnTransitionReverted();
-	
+	UFUNCTION(BlueprintImplementableEvent, Category="Door")
+	void OnTransitionDurationChanged();
+	UFUNCTION(BlueprintImplementableEvent, Category="Door")
+	void OnStateChanged();
+
 	UFUNCTION(BlueprintCallable, Category="Door")
 	void SetDoorLocation(UStaticMeshComponent* DoorMesh, const FVector InitialLocation, const FVector LocationOffset);
 	UFUNCTION(BlueprintCallable, Category="Door")
 	void SetDoorRotation(UStaticMeshComponent* DoorMesh, const FRotator InitialRotation, const FRotator RotationOffset);
-	
+	UFUNCTION(BlueprintCallable, Category="Door")
+	void SetDoorLocationAndRotation(
+			UStaticMeshComponent* DoorMesh,
+			const FVector InitialLocation,
+			const FVector LocationOffset,
+			const FRotator InitialRotation,
+			const FRotator RotationOffset
+		);
+
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Door", meta=(AllowPrivateAccess = "true"))
 	EDoorState InitialState{EDoorState::Closed};
@@ -97,20 +112,20 @@ private:
 	EDoorState PreviousState;
 	UFUNCTION()
 	void ChangeStateTo(const EDoorState NewState);
+	void SetTargetState(const EDoorState State);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Door", meta=(AllowPrivateAccess="true"))
 	float TransitionDuration{0.25f};
-	UPROPERTY(BlueprintReadOnly, Category="Door|Time Handles", meta=(AllowPrivateAccess="true"))
-	FTimerHandle TransitionDurationHandle;
-	FTimerDelegate TransitionDurationDelegate;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Door", meta=(AllowPrivateAccess = "true"))
 	bool bIsTransitionRevertible{false};
 	UFUNCTION()
 	void StartTransition();
 	UFUNCTION()
 	void RevertTransition();
+	UFUNCTION(BlueprintCallable, Category="Door")
+	void FinishTransition();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Door", meta=(AllowPrivateAccess = "true", ClampMin = "1.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Door", meta=(AllowPrivateAccess = "true", ClampMin = "0.0"))
 	float CloseDelay{5.f};
 	UPROPERTY(BlueprintReadOnly, Category="Door|Time Handles", meta=(AllowPrivateAccess="true"))
 	FTimerHandle CloseDelayHandle;

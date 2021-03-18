@@ -11,6 +11,8 @@ ABaseDoor::ABaseDoor()
 
 void ABaseDoor::BeginPlay()
 {
+	CurrentState = InitialState;
+	SetTargetState(CurrentState);
 	Super::BeginPlay();
 }
 
@@ -51,6 +53,10 @@ bool ABaseDoor::CloseDoor()
 		return true;
 	}
 
+	if (GetWorld()->GetTimerManager().IsTimerActive(CloseDelayHandle))
+	{
+		GetWorld()->GetTimerManager().ClearTimer(CloseDelayHandle);
+	}
 	StartTransition();
 	return true;
 }
@@ -80,13 +86,13 @@ bool ABaseDoor::UnlockDoor()
 
 bool ABaseDoor::DisableDoor()
 {
-	if (CurrentState != EDoorState::Closed || CurrentState != EDoorState::Opened)
+	if (CurrentState == EDoorState::Closed || CurrentState == EDoorState::Opened)
 	{
-		return false;
+		ChangeStateTo(EDoorState::Disabled);
+		return true;
 	}
 
-	ChangeStateTo(EDoorState::Disabled);
-	return true;
+	return false;
 }
 
 bool ABaseDoor::EnableDoor(const EDoorState NewState)
@@ -101,6 +107,12 @@ bool ABaseDoor::EnableDoor(const EDoorState NewState)
 	return true;
 }
 
+void ABaseDoor::SetTransitionDuration(const float NewDuration)
+{
+	TransitionDuration = NewDuration;
+	OnTransitionDurationChanged();
+}
+
 void ABaseDoor::SetDoorLocation(
 	UStaticMeshComponent* DoorMesh,
 	const FVector InitialLocation,
@@ -110,7 +122,7 @@ void ABaseDoor::SetDoorLocation(
 	{
 		return;
 	}
-	
+
 	FVector NewLocation = InitialLocation;
 	NewLocation += LocationOffset;
 	DoorMesh->SetWorldLocation(NewLocation);
@@ -131,6 +143,22 @@ void ABaseDoor::SetDoorRotation(
 	DoorMesh->SetWorldRotation(NewRotation);
 }
 
+void ABaseDoor::SetDoorLocationAndRotation(
+	UStaticMeshComponent* DoorMesh,
+	const FVector InitialLocation,
+	const FVector LocationOffset,
+	const FRotator InitialRotation,
+	const FRotator RotationOffset)
+{
+	if (DoorMesh == nullptr)
+	{
+		return;
+	}
+
+	SetDoorLocation(DoorMesh, InitialLocation, LocationOffset);
+	SetDoorRotation(DoorMesh, InitialRotation, RotationOffset);
+}
+
 void ABaseDoor::ChangeStateTo(const EDoorState NewState)
 {
 	PreviousState = CurrentState;
@@ -148,9 +176,13 @@ void ABaseDoor::ChangeStateTo(const EDoorState NewState)
 
 			if (CloseDelay > 0.f)
 			{
-				FTimerDelegate CloseDelayDelegate;
-				CloseDelayDelegate.BindUFunction(this, FName("ChangeStateTo"), EDoorState::Closed);
-				GetWorld()->GetTimerManager().SetTimer(CloseDelayHandle, CloseDelayDelegate, CloseDelay, false);
+				GetWorld()->GetTimerManager().SetTimer(
+													   CloseDelayHandle,
+													   this,
+													   &ABaseDoor::StartTransition,
+													   CloseDelay,
+													   false
+													  );
 			}
 			break;
 		case EDoorState::Locked:
@@ -167,56 +199,42 @@ void ABaseDoor::ChangeStateTo(const EDoorState NewState)
 		default:
 			break;
 	}
+
+	OnStateChanged();
 }
 
-void ABaseDoor::StartTransition()
+void ABaseDoor::SetTargetState(const EDoorState State)
 {
-	if (CurrentState == EDoorState::Closed)
+	if (State == EDoorState::Closed)
 	{
 		TargetState = EDoorState::Opened;
-
-		if (GetWorld()->GetTimerManager().IsTimerActive(CloseDelayHandle))
-		{
-			GetWorld()->GetTimerManager().ClearTimer(CloseDelayHandle);
-		}
 	}
 	else
 	{
 		TargetState = EDoorState::Closed;
 	}
+}
 
-	TransitionDurationDelegate.Unbind();
-	TransitionDurationDelegate.BindUFunction(this, FName("ChangeStateTo"), TargetState);
-	GetWorld()->GetTimerManager().SetTimer(
-										   TransitionDurationHandle,
-										   TransitionDurationDelegate,
-										   TransitionDuration,
-										   false
-										  );
+void ABaseDoor::StartTransition()
+{
+	SetTargetState(CurrentState);	
+
+	if (GetWorld()->GetTimerManager().IsTimerActive(CloseDelayHandle))
+	{
+		GetWorld()->GetTimerManager().ClearTimer(CloseDelayHandle);
+	}
+	
 	ChangeStateTo(EDoorState::Transition);
 }
 
 void ABaseDoor::RevertTransition()
 {
-	if (TargetState == EDoorState::Closed)
-	{
-		TargetState = EDoorState::Opened;
-	}
-	else
-	{
-		TargetState = EDoorState::Closed;
-	}
-
-	TransitionDurationDelegate.Unbind();
-	TransitionDurationDelegate.BindUFunction(this, FName("ChangeStateTo"), TargetState);
-	const float NewTransitionDuration = GetWorld()->GetTimerManager().GetTimerElapsed(TransitionDurationHandle);
-	GetWorld()->GetTimerManager().ClearTimer(TransitionDurationHandle);
-	GetWorld()->GetTimerManager().SetTimer(
-										   TransitionDurationHandle,
-										   TransitionDurationDelegate,
-										   NewTransitionDuration,
-										   false
-										  );
+	SetTargetState(TargetState);
 	OnTransitionReverted();
 	OnDoorTransitionReverted.Broadcast();
+}
+
+void ABaseDoor::FinishTransition()
+{
+	ChangeStateTo(TargetState);
 }
