@@ -162,18 +162,19 @@ private:
 
 	/* Initial state of the switch on BeginPlay. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Floor Switch", meta = (AllowPrivateAccess = "true"))
-	EFloorSwitchState InitialSwitchState{EFloorSwitchState::Idle};
+	EFloorSwitchState InitialState{EFloorSwitchState::Idle};
 	/* Current switch state. */
 	UPROPERTY(BlueprintReadOnly, Category="Floor Switch|States", meta=(AllowPrivateAccess = "true"))
-	EFloorSwitchState CurrentSwitchState{EFloorSwitchState::Idle};
+	EFloorSwitchState CurrentState{EFloorSwitchState::Idle};
 	/* Previous switch sate before locking. */
 	UPROPERTY(BlueprintReadOnly, Category="Floor Switch|States", meta=(AllowPrivateAccess = "true"))
-	EFloorSwitchState PreviousSwitchState;
+	EFloorSwitchState PreviousState;
 	/* Target state for transition. */
 	UPROPERTY(BlueprintReadOnly, Category="Floor Switch|States", meta=(AllowPrivateAccess="true"))
-	EFloorSwitchState TargetSwitchState;
+	EFloorSwitchState TargetState;
 	UFUNCTION()
 	void ChangeStateTo(const EFloorSwitchState NewState);
+	void SetTargetState(const EFloorSwitchState State);
 	
 	/* Determines time of transition between Active and Pressed states. */
 	UPROPERTY(
@@ -190,6 +191,10 @@ private:
 	/* Determines if Transition can be reverted */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Floor Switch", meta=(AllowPrivateAccess="true"))
 	bool bIsTransitionRevertible{false};
+	UFUNCTION()
+	void StartTransition();
+	UFUNCTION()
+	void RevertTransition();
 
 	/* Determines the duration of changing the state from Active to Transition when an Actor steps into the trigger.
 	   If == 0.0 state changes immediately.
@@ -232,9 +237,4 @@ private:
 		meta=(AllowPrivateAccess = "true")
 	)
 	int32 PressesNumber{InitialPressesNumber};
-
-	UFUNCTION()
-	void StartTransition();
-	UFUNCTION()
-	void RevertTransition();
 };

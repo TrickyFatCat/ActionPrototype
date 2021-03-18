@@ -24,7 +24,8 @@ AFloorSwitch::AFloorSwitch()
 void AFloorSwitch::BeginPlay()
 {
 	PressesNumber = InitialPressesNumber;
-	CurrentSwitchState = InitialSwitchState;
+	CurrentState = InitialState;
+	SetTargetState(CurrentState);
 
 	TriggerVolume->OnComponentBeginOverlap.AddDynamic(this, &AFloorSwitch::TriggerOverlapBegin);
 	TriggerVolume->OnComponentEndOverlap.AddDynamic(this, &AFloorSwitch::TriggerOverlapEnd);
@@ -41,7 +42,7 @@ void AFloorSwitch::Tick(float DeltaTime)
 
 void AFloorSwitch::LockFloorSwitch()
 {
-	if (CurrentSwitchState == EFloorSwitchState::Locked || CurrentSwitchState == EFloorSwitchState::Transition)
+	if (CurrentState == EFloorSwitchState::Locked || CurrentState == EFloorSwitchState::Transition)
 	{
 		return;
 	}
@@ -56,7 +57,7 @@ void AFloorSwitch::LockFloorSwitch()
 
 void AFloorSwitch::UnlockFloorSwitch(const EFloorSwitchState NewState)
 {
-	if (CurrentSwitchState != EFloorSwitchState::Locked)
+	if (CurrentState != EFloorSwitchState::Locked)
 	{
 		return;
 	}
@@ -67,7 +68,7 @@ void AFloorSwitch::UnlockFloorSwitch(const EFloorSwitchState NewState)
 
 void AFloorSwitch::DisableFloorSwitch()
 {
-	if (CurrentSwitchState == EFloorSwitchState::Disabled || CurrentSwitchState == EFloorSwitchState::Transition)
+	if (CurrentState == EFloorSwitchState::Disabled || CurrentState == EFloorSwitchState::Transition)
 	{
 		return;
 	}
@@ -83,7 +84,7 @@ void AFloorSwitch::DisableFloorSwitch()
 
 void AFloorSwitch::EnableFloorSwitch()
 {
-	if (CurrentSwitchState != EFloorSwitchState::Disabled)
+	if (CurrentState != EFloorSwitchState::Disabled)
 	{
 		return;
 	}
@@ -94,7 +95,7 @@ void AFloorSwitch::EnableFloorSwitch()
 	TriggerVolume->SetCollisionResponseToChannels(ECR_Ignore);
 	TriggerVolume->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	SetActorTickEnabled(true);
-	CurrentSwitchState = EFloorSwitchState::Idle;
+	CurrentState = EFloorSwitchState::Idle;
 	OnEnabled();
 }
 
@@ -132,7 +133,7 @@ void AFloorSwitch::SetMeshRotation(const FRotator RotationOffset) const
 
 void AFloorSwitch::FinishTransition()
 {
-	ChangeStateTo(TargetSwitchState);
+	ChangeStateTo(TargetState);
 }
 
 void AFloorSwitch::TriggerOverlapBegin(
@@ -146,18 +147,18 @@ void AFloorSwitch::TriggerOverlapBegin(
 {
 	bActorIsInTrigger = true;
 
-	if (CurrentSwitchState == EFloorSwitchState::Locked)
+	if (CurrentState == EFloorSwitchState::Locked)
 	{
 		return;
 	}
 
-	if (CurrentSwitchState == EFloorSwitchState::Transition && bIsTransitionRevertible)
+	if (CurrentState == EFloorSwitchState::Transition && bIsTransitionRevertible)
 	{
 		RevertTransition();
 		return;
 	}
 
-	if (CurrentSwitchState == EFloorSwitchState::Idle)
+	if (CurrentState == EFloorSwitchState::Idle)
 	{
 		if (PressDelay > 0.f)
 		{
@@ -185,7 +186,7 @@ void AFloorSwitch::TriggerOverlapEnd(
 {
 	bActorIsInTrigger = false;
 
-	if (CurrentSwitchState == EFloorSwitchState::Locked)
+	if (CurrentState == EFloorSwitchState::Locked)
 	{
 		return;
 	}
@@ -196,7 +197,7 @@ void AFloorSwitch::TriggerOverlapEnd(
 		return;
 	}
 
-	if (CurrentSwitchState == EFloorSwitchState::Transition && bIsTransitionRevertible)
+	if (CurrentState == EFloorSwitchState::Transition && bIsTransitionRevertible)
 	{
 		RevertTransition();
 		return;
@@ -207,7 +208,7 @@ void AFloorSwitch::TriggerOverlapEnd(
 		return;
 	}
 
-	if (CurrentSwitchState == EFloorSwitchState::Pressed)
+	if (CurrentState == EFloorSwitchState::Pressed)
 	{
 		if (PressedDuration > 0.f)
 		{
@@ -222,8 +223,8 @@ void AFloorSwitch::TriggerOverlapEnd(
 
 void AFloorSwitch::ChangeStateTo(const EFloorSwitchState NewState)
 {
-	PreviousSwitchState = CurrentSwitchState;
-	CurrentSwitchState = NewState;
+	PreviousState = CurrentState;
+	CurrentState = NewState;
 	OnStateChanged();
 
 	switch (NewState)
@@ -277,31 +278,27 @@ void AFloorSwitch::ChangeStateTo(const EFloorSwitchState NewState)
 	}
 }
 
-void AFloorSwitch::StartTransition()
+void AFloorSwitch::SetTargetState(const EFloorSwitchState State)
 {
-	if (CurrentSwitchState == EFloorSwitchState::Idle)
+	if (State == EFloorSwitchState::Idle)
 	{
-		TargetSwitchState = EFloorSwitchState::Pressed;
+		TargetState = EFloorSwitchState::Pressed;
 	}
 	else
 	{
-		TargetSwitchState = EFloorSwitchState::Idle;
+		TargetState = EFloorSwitchState::Idle;
 	}
-	
+}
+
+void AFloorSwitch::StartTransition()
+{
+	SetTargetState(CurrentState);
 	ChangeStateTo(EFloorSwitchState::Transition);
 }
 
 void AFloorSwitch::RevertTransition()
 {
-	if (TargetSwitchState == EFloorSwitchState::Idle)
-	{
-		TargetSwitchState = EFloorSwitchState::Pressed;
-	}
-	else
-	{
-		TargetSwitchState = EFloorSwitchState::Idle;
-	}
-	
+	SetTargetState(TargetState);
 	OnTransitionReverted();
 	OnFloorSwitchTransitionReverted.Broadcast();
 }
