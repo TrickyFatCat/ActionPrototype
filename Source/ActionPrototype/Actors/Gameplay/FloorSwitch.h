@@ -138,7 +138,12 @@ protected:
 	void OnStateChanged();
 
 	UFUNCTION(BlueprintCallable, Category="Floor Switch")
-	void UpdateButtonLocation(const float OffsetX = 0.f, const float OffsetY = 0.f, const float OffsetZ = 0.f) const;
+	void SetMeshLocation(const FVector LocationOffset) const;
+	UFUNCTION(BlueprintCallable, Category="Floor Switch")
+	void SetMeshRotation(const FRotator RotationOffset) const;
+
+	UFUNCTION(BlueprintCallable, Category="Floor Switch")
+	void FinishTransition();
 
 private:
 	// COMPONENTS
@@ -150,6 +155,8 @@ private:
 	// PROPERTIES
 	UPROPERTY(BlueprintReadOnly, Category="Floor Switch", meta=(AllowPrivateAccess="true"))
 	FVector InitialMeshLocation{FVector::ZeroVector};
+	UPROPERTY(BlueprintReadOnly, Category="Floor Switch", meta=(AllowPrivateAccess="true"))
+	FRotator InitialMeshRotation{FRotator::ZeroRotator};
 	UPROPERTY(BlueprintReadOnly, Category="Floor Switch", meta=(AllowPrivateAccess="true"))
 	bool bActorIsInTrigger{false};
 
@@ -165,7 +172,9 @@ private:
 	/* Target state for transition. */
 	UPROPERTY(BlueprintReadOnly, Category="Floor Switch|States", meta=(AllowPrivateAccess="true"))
 	EFloorSwitchState TargetSwitchState;
-
+	UFUNCTION()
+	void ChangeStateTo(const EFloorSwitchState NewState);
+	
 	/* Determines time of transition between Active and Pressed states. */
 	UPROPERTY(
 		EditAnywhere,
@@ -174,9 +183,10 @@ private:
 		meta=(AllowPrivateAccess = "true", ClampMin = "0.0")
 	)
 	float TransitionTime{5.f};
-	UPROPERTY(BlueprintReadOnly, Category="Floor Switch", meta=(AllowPrivateAccess="true"))
-	FTimerHandle TransitionTimerHandle;
-	FTimerDelegate TransitionTimerDelegate;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Floor Switch", meta=(AllowPrivateAccess = "true"))
+	FVector TransitionLocationOffset{FVector::ZeroVector};
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Floor Switch", meta=(AllowPrivateAccess = "true"))
+	FRotator TransitionRotationOffset{FRotator::ZeroRotator};
 	/* Determines if Transition can be reverted */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Floor Switch", meta=(AllowPrivateAccess="true"))
 	bool bIsTransitionRevertible{false};
@@ -223,9 +233,6 @@ private:
 	)
 	int32 PressesNumber{InitialPressesNumber};
 
-	// FUNCTIONS
-	UFUNCTION()
-	void ChangeStateTo(const EFloorSwitchState NewState);
 	UFUNCTION()
 	void StartTransition();
 	UFUNCTION()

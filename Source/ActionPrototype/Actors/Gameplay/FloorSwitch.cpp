@@ -30,6 +30,7 @@ void AFloorSwitch::BeginPlay()
 	TriggerVolume->OnComponentEndOverlap.AddDynamic(this, &AFloorSwitch::TriggerOverlapEnd);
 
 	InitialMeshLocation = SwitchMesh->GetComponentLocation();
+	InitialMeshRotation = SwitchMesh->GetComponentRotation();
 	Super::BeginPlay();
 }
 
@@ -115,13 +116,23 @@ float AFloorSwitch::SetTransitionTime(const float NewTime)
 	return TransitionTime = FMath::Abs(NewTime);
 }
 
-void AFloorSwitch::UpdateButtonLocation(const float OffsetX, const float OffsetY, const float OffsetZ) const
+void AFloorSwitch::SetMeshLocation(const FVector LocationOffset) const
 {
 	FVector NewLocation = InitialMeshLocation;
-	NewLocation.X += OffsetX;
-	NewLocation.Y += OffsetY;
-	NewLocation.Z += OffsetZ;
+	NewLocation += LocationOffset;	
 	SwitchMesh->SetWorldLocation(NewLocation);
+}
+
+void AFloorSwitch::SetMeshRotation(const FRotator RotationOffset) const
+{
+	FRotator NewRotation = InitialMeshRotation;
+	NewRotation += RotationOffset;
+	SwitchMesh->SetWorldRotation(NewRotation);
+}
+
+void AFloorSwitch::FinishTransition()
+{
+	ChangeStateTo(TargetSwitchState);
 }
 
 void AFloorSwitch::TriggerOverlapBegin(
@@ -276,14 +287,8 @@ void AFloorSwitch::StartTransition()
 	{
 		TargetSwitchState = EFloorSwitchState::Idle;
 	}
+	
 	ChangeStateTo(EFloorSwitchState::Transition);
-	TransitionTimerDelegate.BindUFunction(this, FName("ChangeStateTo"), TargetSwitchState);
-	GetWorld()->GetTimerManager().SetTimer(
-										   TransitionTimerHandle,
-										   TransitionTimerDelegate,
-										   TransitionTime,
-										   false
-										  );
 }
 
 void AFloorSwitch::RevertTransition()
@@ -296,12 +301,7 @@ void AFloorSwitch::RevertTransition()
 	{
 		TargetSwitchState = EFloorSwitchState::Idle;
 	}
-	TransitionTimerDelegate.BindUFunction(this, FName("ChangeStateTo"), TargetSwitchState);
-
-	// TODO add different time for transition to Pressed and transition to Active
-	const float NewTransitionTime = GetWorld()->GetTimerManager().GetTimerElapsed(TransitionTimerHandle);
-	GetWorld()->GetTimerManager().ClearTimer(TransitionTimerHandle);
-	GetWorld()->GetTimerManager().SetTimer(TransitionTimerHandle, TransitionTimerDelegate, NewTransitionTime, false);
+	
 	OnTransitionReverted();
 	OnFloorSwitchTransitionReverted.Broadcast();
 }
