@@ -237,4 +237,5 @@ void ABaseDoor::RevertTransition()
 void ABaseDoor::FinishTransition()
 {
 	ChangeStateTo(TargetState);
+	OnTransitionFinished();
 }

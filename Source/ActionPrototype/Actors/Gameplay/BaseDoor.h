@@ -99,9 +99,16 @@ protected:
 	/* Calls when a door enters the Transition state */
 	UFUNCTION(BlueprintImplementableEvent, Category="Door")
 	void OnTransitionStarted();
+	/* Calls every Timeline tick in a Transition state
+	 * Must be implemented in Blueprint class */
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category="Door")
+	void OnTransitionUpdate(float TransitionProgress);
 	/* Calls when TargetState was changed during the Transition state */
 	UFUNCTION(BlueprintImplementableEvent, Category="Door")
 	void OnTransitionReverted();
+	/* Calls when a door exits the Transition state */
+	UFUNCTION(BlueprintImplementableEvent, Category="Door")
+	void OnTransitionFinished();
 	/* Calls when TransitionDuration changed */
 	UFUNCTION(BlueprintImplementableEvent, Category="Door")
 	void OnTransitionDurationChanged();
@@ -112,15 +119,13 @@ protected:
 	/* Sets world location of the given static mesh
 	 * @param DoorMesh — door's leaf static mesh.
 	 * @param InitialLocation — initial location of DoorMesh on BeginPlay.
-	 * @param LocationOffset — the distance on which DoorMesh is moved.
-	 */
+	 * @param LocationOffset — the distance on which DoorMesh is moved. */
 	UFUNCTION(BlueprintCallable, Category="Door")
 	void SetDoorLocation(UStaticMeshComponent* DoorMesh, const FVector InitialLocation, const FVector LocationOffset);
 	/* Sets world rotation of the given static mesh
 	 * @param DoorMesh — door's leaf static mesh.
 	 * @param InitialRotation — initial rotation of DoorMesh on BeginPlay.
-	 * @param LocationOffset — the angle on which DoorMesh is rotated.
-	 */
+	 * @param LocationOffset — the angle on which DoorMesh is rotated. */
 	UFUNCTION(BlueprintCallable, Category="Door")
 	void SetDoorRotation(UStaticMeshComponent* DoorMesh, const FRotator InitialRotation, const FRotator RotationOffset);
 	/* Sets world location and rotation of the given static mesh
@@ -128,8 +133,7 @@ protected:
 	 * @param InitialLocation — initial location of DoorMesh on BeginPlay.
 	 * @param LocationOffset — the distance on which DoorMesh is moved.
 	 * @param InitialRotation — initial rotation of DoorMesh on BeginPlay.
-	 * @param LocationOffset — the angle on which DoorMesh is rotated.
-	 */
+	 * @param LocationOffset — the angle on which DoorMesh is rotated. */
 	UFUNCTION(BlueprintCallable, Category="Door")
 	void SetDoorLocationAndRotation(
 			UStaticMeshComponent* DoorMesh,
@@ -170,14 +174,12 @@ private:
 	UFUNCTION()
 	void RevertTransition();
 	/* Changes CurrentState to TargetState value.
-	 * @warning It must be called in Blueprints in order to finish transition.
-	 */
+	 * @warning It must be called in Blueprints in order to finish transition. */
 	UFUNCTION(BlueprintCallable, Category="Door")
 	void FinishTransition();
 
 	/* Determines how long a door stays in the Opened state before calling CloseDoor() automatically.
-	 * @warning If it's equal 0 CloseDoor() won't be called automatically.
-	 */
+	 * @warning If it's equal 0 CloseDoor() won't be called automatically. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Door", meta=(AllowPrivateAccess = "true", ClampMin = "0.0"))
 	float CloseDelay{5.f};
 	/* CloseDelay timer handle */
