@@ -12,7 +12,7 @@ class UCameraComponent;
 /**
  * 
  */
-UCLASS(Blueprintable, Placeable)
+UCLASS()
 class ACTIONPROTOTYPE_API APlayerCharacter : public ABaseCharacter
 {
 	GENERATED_BODY()
