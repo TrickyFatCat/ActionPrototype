@@ -35,6 +35,13 @@ bool ABaseDoor::OpenDoor()
 		return true;
 	}
 
+	if (TransitionDuration <= 0.f)
+	{
+		SetTargetState(CurrentState);
+		FinishTransition();
+		return true;
+	}
+
 	StartTransition();
 	return true;
 }
@@ -57,6 +64,14 @@ bool ABaseDoor::CloseDoor()
 	{
 		GetWorld()->GetTimerManager().ClearTimer(CloseDelayHandle);
 	}
+
+	if (TransitionDuration <= 0.f)
+	{
+		SetTargetState(CurrentState);
+		FinishTransition();
+		return true;
+	}
+	
 	StartTransition();
 	return true;
 }
