@@ -36,14 +36,13 @@ public:
 
 protected:
 	UFUNCTION(BlueprintImplementableEvent, Category="Moving Platform")
-	void OnPointPassed(const int32 PassedPoint);
+	void OnStartMovement();
 	UFUNCTION(BlueprintImplementableEvent, Category="Moving Platform")
-	void OnPlatformWaitStart();
+	void OnArrivedInPoint(const int32 PointIndex);
 	UFUNCTION(BlueprintImplementableEvent, Category="Moving Platform")
-	void OnPlatformWaitFinish();
-	
-	UFUNCTION(BlueprintCallable, Category="Moving Platform")
-	void ClearPassedPoints();
+	void OnWaitStart();
+	UFUNCTION(BlueprintImplementableEvent, Category="Moving Platform")
+	void OnWaitFinish();
 
 private:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
@@ -58,17 +57,23 @@ private:
 	UFUNCTION(BlueprintCallable, Category="Moving Platform")
 	void SetMovingPlatformMode(const EPlatformMode NewMode);
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Moving Platform", meta=(AllowPrivateAccess="true"))
-	TArray<float> PointsPositions{};
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Moving Platform", meta=(AllowPrivateAccess="true"))
-	TArray<int32> PassedPoints{};
-	void FillPointsPositions();
-	UPROPERTY(BlueprintReadWrite, Category="Moving Platform", meta=(AllowPrivateAccess = "true"))
-	bool bIsReversed{false};
-	UFUNCTION(BlueprintCallable, Category="Moving Platform")
-	void CheckPointsOnPath(const float PathProgress);
-	void AddPointToPassedPoints(const int32 PointIndex);
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Moving Platform", meta=(AllowPrivateAccess = "true"))
+	bool bIsReversed{false};
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Moving Platform", meta=(AllowPrivateAccess = "true"))
+	int32 StartPoint{0};
+	UPROPERTY(BlueprintReadWrite, Category="Moving Platform", meta=(AllowPrivateAccess="true"))
+	int32 PreviousPoint{0};
+	UPROPERTY(BlueprintReadWrite, Category="Moving Platform", meta=(AllowPrivateAccess="true"))
+	int32 TargetPoint{1};
+	bool IsTargetPointOutOfBounds() const;
+	void ProcessOneWayMode();
+	void ProcessLoopMode();
+	void ProcessReverseLoopMode();
+	void ContinueMovement();
+	UFUNCTION(BlueprintCallable, Category="Moving Platform")
+	void CalculateTargetPoint();
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Moving Platform", meta=(AllowPrivateAccess="true"))
 	bool bInheritPitch{false};
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Moving Platform", meta=(AllowPrivateAccess = "true"))
@@ -79,14 +84,11 @@ private:
 	void MoveAlongSpline(const float PathProgress) const;
 	void RotateAlongSpline(const float PathProgress) const;
 	UFUNCTION(BlueprintCallable, Category="Moving Platform")
-	void ProcessPlatformMovement(const float PathProgress);
+	void MovePlatform(const float PathProgress);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Moving Platform", meta=(AllowPrivateAccess = "true"))
 	float WaitDuration{0.f};
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Moving Platform", meta=(AllowPrivateAccess = "true"))
+	UPROPERTY(BlueprintReadOnly, Category="Moving Platform", meta=(AllowPrivateAccess = "true"))
 	FTimerHandle WaitDurationHandle{};
-	UFUNCTION(BlueprintCallable, Category="Moving Platform")
 	void StartWaitTimer();
-	
-	
 };

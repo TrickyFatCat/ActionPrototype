@@ -23,19 +23,19 @@ AMovingPlatform::AMovingPlatform()
 void AMovingPlatform::BeginPlay()
 {
 	Super::BeginPlay();
-	FillPointsPositions();
 	CurrentMode = InitialMode;
+
+	if (WaitDuration > 0)
+	{
+		PreviousPoint = StartPoint;
+		TargetPoint = PreviousPoint + 1;
+	}
 }
 
 // Called every frame
 void AMovingPlatform::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-}
-
-void AMovingPlatform::ClearPassedPoints()
-{
-	PassedPoints.Empty();
 }
 
 void AMovingPlatform::SetMovingPlatformMode(const EPlatformMode NewMode)
@@ -48,58 +48,128 @@ void AMovingPlatform::SetMovingPlatformMode(const EPlatformMode NewMode)
 	CurrentMode = NewMode;
 }
 
-void AMovingPlatform::FillPointsPositions()
+bool AMovingPlatform::IsTargetPointOutOfBounds() const
 {
-	const float SplineLength = PlatformPath->GetSplineLength();
-	for (int i = 0; i < PlatformPath->GetNumberOfSplinePoints(); ++i)
+	if (bIsReversed)
 	{
-		PointsPositions.Add(PlatformPath->GetDistanceAlongSplineAtSplinePoint(i) / SplineLength);
+		return TargetPoint < 0;
 	}
+
+	if (PlatformPath->IsClosedLoop())
+	{
+		return TargetPoint > PlatformPath->GetNumberOfSplinePoints();
+	}
+
+	return TargetPoint >= PlatformPath->GetNumberOfSplinePoints();
 }
 
-void AMovingPlatform::CheckPointsOnPath(const float PathProgress)
+void AMovingPlatform::ProcessOneWayMode()
 {
-	const int32 ArraySize = PointsPositions.Num();
+	PreviousPoint = TargetPoint;
+	TargetPoint++;
 
-	if (ArraySize == 0)
+	if (IsTargetPointOutOfBounds())
 	{
 		return;
 	}
 
-	for (int i = 0; i < ArraySize; ++i)
-	{
-		if (PassedPoints.Contains(i))
-		{
-			continue;
-		}
+	ContinueMovement();
+}
 
-		if (bIsReversed)
+void AMovingPlatform::ProcessLoopMode()
+{
+	PreviousPoint = TargetPoint;
+	TargetPoint++;
+
+	if (IsTargetPointOutOfBounds())
+	{
+		PreviousPoint = 0;
+		TargetPoint = 1;
+	}
+
+	ContinueMovement();
+}
+
+void AMovingPlatform::ProcessReverseLoopMode()
+{
+	PreviousPoint = TargetPoint;
+
+	if (bIsReversed)
+	{
+		TargetPoint--;
+
+		if (IsTargetPointOutOfBounds())
 		{
-			if (PathProgress <= PointsPositions[i])
-			{
-				AddPointToPassedPoints(i);
-			}
+			bIsReversed = false;
+			TargetPoint = 1;
 		}
-		else
+	}
+	else
+	{
+		TargetPoint++;
+
+		if (IsTargetPointOutOfBounds())
 		{
-			if (PathProgress >= PointsPositions[i])
-			{
-				AddPointToPassedPoints(i);
-			}
+			bIsReversed = true;
+			TargetPoint = PreviousPoint - 1;
 		}
+	}
+
+	ContinueMovement();
+}
+
+void AMovingPlatform::ContinueMovement()
+{
+	StartWaitTimer();
+
+	if (WaitDuration <= 0.f)
+	{
+		OnStartMovement();
 	}
 }
 
-void AMovingPlatform::AddPointToPassedPoints(const int32 PointIndex)
+void AMovingPlatform::CalculateTargetPoint()
 {
-	PassedPoints.Add(PointIndex);
-	OnPointPassed(PointIndex);
-	StartWaitTimer();
+	if (WaitDuration <= 0.f)
+	{
+		return;
+	}
+
+	OnArrivedInPoint(TargetPoint);
+	
+	switch (CurrentMode)
+	{
+		case EPlatformMode::OneWay:
+			ProcessOneWayMode();
+			break;
+		case EPlatformMode::Loop:
+			ProcessLoopMode();
+			break;
+		case EPlatformMode::ReverseLoop:
+			ProcessReverseLoopMode();
+			break;
+		default:
+			break;
+	}
 }
 
 float AMovingPlatform::GetCurrentPlatformPosition(const float PathProgress) const
 {
-	return FMath::Lerp(0.f, PlatformPath->GetSplineLength(), PathProgress);
+	float Start;
+	float End;
+
+	if (WaitDuration <= 0.f)
+	{
+		Start = 0;
+		End = PlatformPath->GetSplineLength();
+	}
+	else
+	{
+		Start = PlatformPath->GetDistanceAlongSplineAtSplinePoint(PreviousPoint);
+		End = PlatformPath->GetDistanceAlongSplineAtSplinePoint(TargetPoint);
+	}
+
+	return FMath::Lerp(Start, End, PathProgress);
 }
 
 void AMovingPlatform::MoveAlongSpline(const float PathProgress) const
@@ -127,9 +197,8 @@ void AMovingPlatform::RotateAlongSpline(const float PathProgress) const
 	PlatformMesh->SetWorldRotation(NewRotation);
 }
 
-void AMovingPlatform::ProcessPlatformMovement(const float PathProgress)
+void AMovingPlatform::MovePlatform(const float PathProgress)
 {
-	CheckPointsOnPath(PathProgress);
 	MoveAlongSpline(PathProgress);
 	RotateAlongSpline(PathProgress);
 }
@@ -138,13 +207,13 @@ void AMovingPlatform::StartWaitTimer()
 {
 	if (WaitDuration > 0.f && !GetWorld()->GetTimerManager().IsTimerActive(WaitDurationHandle))
 	{
-		OnPlatformWaitStart();
+		OnWaitStart();
 		GetWorld()->GetTimerManager().SetTimer(
-                                               WaitDurationHandle,
-                                               this,
-                                               &AMovingPlatform::OnPlatformWaitFinish,
-                                               WaitDuration,
-                                               false
-                                              );
+											   WaitDurationHandle,
+											   this,
+											   &AMovingPlatform::OnWaitFinish,
+											   WaitDuration,
+											   false
+											  );
 	}
 }
