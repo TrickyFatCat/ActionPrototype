@@ -14,7 +14,8 @@ enum class EPlatformMode : uint8
 {
 	OneWay,
 	Loop,
-	ReverseLoop
+	ReverseLoop,
+	Manual
 };
 
 UCLASS()
@@ -60,20 +61,30 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Moving Platform", meta=(AllowPrivateAccess = "true"))
 	bool bIsReversed{false};
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Moving Platform", meta=(AllowPrivateAccess = "true"))
+	UPROPERTY(
+		EditAnywhere,
+		BlueprintReadWrite,
+		Category="Moving Platform",
+		meta=(AllowPrivateAccess = "true", ClampMin = "0")
+	)
 	int32 StartPoint{0};
 	UPROPERTY(BlueprintReadWrite, Category="Moving Platform", meta=(AllowPrivateAccess="true"))
 	int32 PreviousPoint{0};
 	UPROPERTY(BlueprintReadWrite, Category="Moving Platform", meta=(AllowPrivateAccess="true"))
 	int32 TargetPoint{1};
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Moving Platform", meta=(AllowPrivateAccess = "true"))
+	TSet<int32> StopoverPointsSet{};
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Moving Platform", meta=(AllowPrivateAccess="true"))
+	TArray<int32> StopoverPointsArray{};
 	bool IsTargetPointOutOfBounds() const;
 	void ProcessOneWayMode();
 	void ProcessLoopMode();
 	void ProcessReverseLoopMode();
+	void ProcessManualMode();
 	void ContinueMovement();
 	UFUNCTION(BlueprintCallable, Category="Moving Platform")
 	void CalculateTargetPoint();
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Moving Platform", meta=(AllowPrivateAccess="true"))
 	bool bInheritPitch{false};
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Moving Platform", meta=(AllowPrivateAccess = "true"))
@@ -86,7 +97,12 @@ private:
 	UFUNCTION(BlueprintCallable, Category="Moving Platform")
 	void MovePlatform(const float PathProgress);
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Moving Platform", meta=(AllowPrivateAccess = "true"))
+	UPROPERTY(
+		EditAnywhere,
+		BlueprintReadWrite,
+		Category="Moving Platform",
+		meta=(AllowPrivateAccess = "true", ClampMin = "0.0")
+	)
 	float WaitDuration{0.f};
 	UPROPERTY(BlueprintReadOnly, Category="Moving Platform", meta=(AllowPrivateAccess = "true"))
 	FTimerHandle WaitDurationHandle{};

@@ -2,6 +2,9 @@
 
 
 #include "MovingPlatform.h"
+
+#include <iterator>
+
 #include "Components/SplineComponent.h"
 #include "Containers/Array.h"
 
@@ -22,14 +25,67 @@ AMovingPlatform::AMovingPlatform()
 // Called when the game starts or when spawned
 void AMovingPlatform::BeginPlay()
 {
-	Super::BeginPlay();
 	CurrentMode = InitialMode;
 
-	if (WaitDuration > 0)
+	if (StartPoint > PlatformPath->GetNumberOfSplinePoints())
+	{
+		StartPoint = PlatformPath->GetNumberOfSplinePoints();
+		UE_LOG(
+			   LogTemp,
+			   Error,
+			   TEXT(
+				   "Illegal value. Strat point index can't be greater than the max number of points in spline.\nCheck the option in %s"
+			   ),
+			   *this->GetName()
+			  );
+	}
+
+	if (WaitDuration > 0.f && StopoverPointsSet.Num() == 0)
 	{
 		PreviousPoint = StartPoint;
 		TargetPoint = PreviousPoint + 1;
 	}
+
+	if (StopoverPointsSet.Num() > 0)
+	{
+		if (!StopoverPointsSet.Contains(0))
+		{
+			StopoverPointsSet.Add(0);
+		}
+
+		const int32 NumberOfPoints = PlatformPath->GetNumberOfSplinePoints();
+		const int32 LastPoint = PlatformPath->IsClosedLoop() ? NumberOfPoints : NumberOfPoints - 1;
+
+		if (!StopoverPointsSet.Contains(LastPoint))
+		{
+			StopoverPointsSet.Add(LastPoint);
+		}
+
+
+		for (int32 Point : StopoverPointsSet)
+		{
+			if (Point > LastPoint || Point < 0)
+			{
+				UE_LOG(
+					   LogTemp,
+					   Error,
+					   TEXT(
+						   "Illegal point index %d in StopoverPointsSet.\n Index can't be less than zero or more than the last point index in spline.\n Check actor %s"
+					   ),
+					   Point,
+					   *this->GetName()
+					  );
+				StopoverPointsSet.Remove(Point);
+			}
+		}
+
+		StopoverPointsArray = StopoverPointsSet.Array();
+		StopoverPointsArray.Sort();
+		StopoverPointsSet.Empty();
+		PreviousPoint = StopoverPointsArray[0];
+		TargetPoint = StopoverPointsArray[1];
+	}
+	Super::BeginPlay();
 }
 
 // Called every frame
@@ -118,6 +174,22 @@ void AMovingPlatform::ProcessReverseLoopMode()
 	ContinueMovement();
 }
 
+void AMovingPlatform::ProcessManualMode()
+{
+	PreviousPoint = TargetPoint;
+	const int32 CurrentPointIndex = StopoverPointsArray.IndexOfByKey(PreviousPoint);
+	int32 NextPointIndex = CurrentPointIndex + 1;
+
+	if (NextPointIndex >= StopoverPointsArray.Num())
+	{
+		PreviousPoint = 0;
+		NextPointIndex = PlatformPath->IsClosedLoop() ? 1 : 0;
+	}
+
+	TargetPoint = StopoverPointsArray[NextPointIndex];
+	ContinueMovement();
+}
+
 void AMovingPlatform::ContinueMovement()
 {
 	StartWaitTimer();
@@ -136,7 +208,7 @@ void AMovingPlatform::CalculateTargetPoint()
 	}
 
 	OnArrivedInPoint(TargetPoint);
-	
+
 	switch (CurrentMode)
 	{
 		case EPlatformMode::OneWay:
@@ -147,6 +219,9 @@ void AMovingPlatform::CalculateTargetPoint()
 			break;
 		case EPlatformMode::ReverseLoop:
 			ProcessReverseLoopMode();
+			break;
+		case EPlatformMode::Manual:
+			ProcessManualMode();
 			break;
 		default:
 			break;
