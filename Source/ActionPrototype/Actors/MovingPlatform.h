@@ -76,14 +76,14 @@ private:
 	TSet<int32> StopoverPointsSet{};
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Moving Platform", meta=(AllowPrivateAccess="true"))
 	TArray<int32> StopoverPointsArray{};
+	int32 GetLastIndex() const;
+	int32 GetLastPoint() const;
 	bool IsTargetPointOutOfBounds() const;
-	void ProcessOneWayMode();
-	void ProcessLoopMode();
-	void ProcessReverseLoopMode();
-	void ProcessManualMode();
 	void ContinueMovement();
+	void CalculateNextPoint();
+	void CalculateNextStopover();
 	UFUNCTION(BlueprintCallable, Category="Moving Platform")
-	void CalculateTargetPoint();
+	void ChangeTargetPoint();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Moving Platform", meta=(AllowPrivateAccess="true"))
 	bool bInheritPitch{false};

@@ -3,8 +3,6 @@
 
 #include "MovingPlatform.h"
 
-#include <iterator>
-
 #include "Components/SplineComponent.h"
 #include "Containers/Array.h"
 
@@ -43,7 +41,7 @@ void AMovingPlatform::BeginPlay()
 	if (WaitDuration > 0.f && StopoverPointsSet.Num() == 0)
 	{
 		PreviousPoint = StartPoint;
-		TargetPoint = PreviousPoint + 1;
+		TargetPoint = bIsReversed ? PreviousPoint - 1 : PreviousPoint + 1;
 	}
 
 	if (StopoverPointsSet.Num() > 0)
@@ -53,14 +51,14 @@ void AMovingPlatform::BeginPlay()
 			StopoverPointsSet.Add(0);
 		}
 
-		const int32 NumberOfPoints = PlatformPath->GetNumberOfSplinePoints();
-		const int32 LastPoint = PlatformPath->IsClosedLoop() ? NumberOfPoints : NumberOfPoints - 1;
+		const int32 LastPoint = GetLastPoint();
 
 		if (!StopoverPointsSet.Contains(LastPoint))
 		{
 			StopoverPointsSet.Add(LastPoint);
 		}
 
+		TSet<int32> ClearSet;
 
 		for (int32 Point : StopoverPointsSet)
 		{
@@ -75,16 +73,21 @@ void AMovingPlatform::BeginPlay()
 					   Point,
 					   *this->GetName()
 					  );
-				StopoverPointsSet.Remove(Point);
+			}
+			else
+			{
+				ClearSet.Add(Point);
 			}
 		}
 
-		StopoverPointsArray = StopoverPointsSet.Array();
+		StopoverPointsArray = ClearSet.Array();
 		StopoverPointsArray.Sort();
 		StopoverPointsSet.Empty();
-		PreviousPoint = StopoverPointsArray[0];
-		TargetPoint = StopoverPointsArray[1];
+		ClearSet.Empty();
+		PreviousPoint = bIsReversed ? StopoverPointsArray[GetLastIndex()] : StopoverPointsArray[0];
+		TargetPoint = bIsReversed ? StopoverPointsArray[GetLastIndex() - 1] : StopoverPointsArray[1];
 	}
+
 	Super::BeginPlay();
 }
 
@@ -104,6 +107,17 @@ void AMovingPlatform::SetMovingPlatformMode(const EPlatformMode NewMode)
 	CurrentMode = NewMode;
 }
 
+int32 AMovingPlatform::GetLastIndex() const
+{
+	return StopoverPointsArray.Num() - 1;
+}
+
+int32 AMovingPlatform::GetLastPoint() const
+{
+	const int32 NumberOfPoints = PlatformPath->GetNumberOfSplinePoints();
+	return PlatformPath->IsClosedLoop() ? NumberOfPoints : NumberOfPoints - 1;
+}
+
 bool AMovingPlatform::IsTargetPointOutOfBounds() const
 {
 	if (bIsReversed)
@@ -119,76 +133,6 @@ bool AMovingPlatform::IsTargetPointOutOfBounds() const
 	return TargetPoint >= PlatformPath->GetNumberOfSplinePoints();
 }
 
-void AMovingPlatform::ProcessOneWayMode()
-{
-	PreviousPoint = TargetPoint;
-	TargetPoint++;
-
-	if (IsTargetPointOutOfBounds())
-	{
-		return;
-	}
-
-	ContinueMovement();
-}
-
-void AMovingPlatform::ProcessLoopMode()
-{
-	PreviousPoint = TargetPoint;
-	TargetPoint++;
-
-	if (IsTargetPointOutOfBounds())
-	{
-		PreviousPoint = 0;
-		TargetPoint = 1;
-	}
-
-	ContinueMovement();
-}
-
-void AMovingPlatform::ProcessReverseLoopMode()
-{
-	PreviousPoint = TargetPoint;
-
-	if (bIsReversed)
-	{
-		TargetPoint--;
-
-		if (IsTargetPointOutOfBounds())
-		{
-			bIsReversed = false;
-			TargetPoint = 1;
-		}
-	}
-	else
-	{
-		TargetPoint++;
-
-		if (IsTargetPointOutOfBounds())
-		{
-			bIsReversed = true;
-			TargetPoint = PreviousPoint - 1;
-		}
-	}
-
-	ContinueMovement();
-}
-
-void AMovingPlatform::ProcessManualMode()
-{
-	PreviousPoint = TargetPoint;
-	const int32 CurrentPointIndex = StopoverPointsArray.IndexOfByKey(PreviousPoint);
-	int32 NextPointIndex = CurrentPointIndex + 1;
-
-	if (NextPointIndex >= StopoverPointsArray.Num())
-	{
-		PreviousPoint = 0;
-		NextPointIndex = PlatformPath->IsClosedLoop() ? 1 : 0;
-	}
-
-	TargetPoint = StopoverPointsArray[NextPointIndex];
-	ContinueMovement();
-}
 
 void AMovingPlatform::ContinueMovement()
 {
@@ -200,7 +144,110 @@ void AMovingPlatform::ContinueMovement()
 	}
 }
 
-void AMovingPlatform::CalculateTargetPoint()
+void AMovingPlatform::CalculateNextPoint()
+{
+	TargetPoint = bIsReversed ? TargetPoint - 1 : TargetPoint + 1;
+	const bool bIsOutOfBounds =	IsTargetPointOutOfBounds();
+
+	switch (CurrentMode)
+	{
+		case EPlatformMode::OneWay:
+			if (bIsOutOfBounds)
+			{
+				return;
+			}
+
+			ContinueMovement();
+			break;
+		case EPlatformMode::Loop:
+			if (bIsOutOfBounds)
+			{
+				PreviousPoint = bIsReversed ? GetLastPoint() : 0;
+				TargetPoint = bIsReversed ? PreviousPoint - 1 : PreviousPoint + 1;
+			}
+
+			ContinueMovement();
+			break;
+		case EPlatformMode::ReverseLoop:
+			if (bIsReversed)
+			{
+				if (bIsOutOfBounds)
+				{
+					bIsReversed = false;
+					TargetPoint = 1;
+				}
+			}
+			else
+			{
+				if (bIsOutOfBounds)
+				{
+					bIsReversed = true;
+					TargetPoint = PreviousPoint - 1;
+				}
+			}
+
+			ContinueMovement();
+			break;
+		default:
+			break;
+	}
+}
+
+void AMovingPlatform::CalculateNextStopover()
+{
+	const int32 CurrentPointIndex = StopoverPointsArray.IndexOfByKey(PreviousPoint);
+	int32 NextPointIndex = bIsReversed ? CurrentPointIndex - 1 : CurrentPointIndex + 1;
+	const bool bIsOutOfBounds = NextPointIndex >= StopoverPointsArray.Num() || NextPointIndex < 0;
+
+	switch (CurrentMode)
+	{
+		case EPlatformMode::OneWay:
+			if (bIsOutOfBounds)
+			{
+				return;
+			}
+
+			TargetPoint = StopoverPointsArray[NextPointIndex];
+			ContinueMovement();
+			break;
+		case EPlatformMode::Loop:
+			if (bIsOutOfBounds)
+			{
+				const int32 LastIndex = GetLastIndex();
+				PreviousPoint = bIsReversed ? StopoverPointsArray[LastIndex] : 0;
+				NextPointIndex = bIsReversed ? LastIndex - 1 : 1;
+			}
+
+			TargetPoint = StopoverPointsArray[NextPointIndex];
+			ContinueMovement();
+			break;
+		case EPlatformMode::ReverseLoop:
+			if (bIsReversed)
+			{
+				if (bIsOutOfBounds)
+				{
+					bIsReversed = false;
+					NextPointIndex = 1;
+				}
+			}
+			else
+			{
+				if (bIsOutOfBounds)
+				{
+					bIsReversed = true;
+					NextPointIndex = GetLastIndex() - 1;
+				}
+			}
+
+			TargetPoint = StopoverPointsArray[NextPointIndex];
+			ContinueMovement();
+			break;
+		default:
+			break;
+	}
+}
+
+void AMovingPlatform::ChangeTargetPoint()
 {
 	if (WaitDuration <= 0.f)
 	{
@@ -208,23 +255,15 @@ void AMovingPlatform::CalculateTargetPoint()
 	}
 
 	OnArrivedInPoint(TargetPoint);
+	PreviousPoint = TargetPoint;
 
-	switch (CurrentMode)
+	if (StopoverPointsArray.Num() <= 0)
 	{
-		case EPlatformMode::OneWay:
-			ProcessOneWayMode();
-			break;
-		case EPlatformMode::Loop:
-			ProcessLoopMode();
-			break;
-		case EPlatformMode::ReverseLoop:
-			ProcessReverseLoopMode();
-			break;
-		case EPlatformMode::Manual:
-			ProcessManualMode();
-			break;
-		default:
-			break;
+		CalculateNextPoint();
+	}
+	else
+	{
+		CalculateNextStopover();
 	}
 }
 
