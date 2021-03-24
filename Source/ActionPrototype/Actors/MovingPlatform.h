@@ -53,7 +53,7 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Moving Platform", meta=(AllowPrivateAccess = "true"))
 	EPlatformMode InitialMode{EPlatformMode::OneWay};
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Moving Platform", meta=(AllowPrivateAccess="true"))
+	UPROPERTY(BlueprintReadOnly, Category="Moving Platform", meta=(AllowPrivateAccess="true"))
 	EPlatformMode CurrentMode{EPlatformMode::OneWay};
 	UFUNCTION(BlueprintCallable, Category="Moving Platform")
 	void SetMovingPlatformMode(const EPlatformMode NewMode);
@@ -65,17 +65,19 @@ private:
 		EditAnywhere,
 		BlueprintReadWrite,
 		Category="Moving Platform",
-		meta=(AllowPrivateAccess = "true", ClampMin = "0")
+		meta=(AllowPrivateAccess="true", ClampMin="0")
 	)
 	int32 StartPoint{0};
 	UPROPERTY(BlueprintReadWrite, Category="Moving Platform", meta=(AllowPrivateAccess="true"))
 	int32 PreviousPoint{0};
 	UPROPERTY(BlueprintReadWrite, Category="Moving Platform", meta=(AllowPrivateAccess="true"))
 	int32 TargetPoint{1};
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Moving Platform", meta=(AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Moving Platform", meta=(AllowPrivateAccess="true"))
 	TSet<int32> StopoverPointsSet{};
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Moving Platform", meta=(AllowPrivateAccess="true"))
 	TArray<int32> StopoverPointsArray{};
+	UFUNCTION(BlueprintCallable, Category="Moving Platform")
+	void CalculateStopoverPoinstArray();
 	int32 GetLastIndex() const;
 	int32 GetLastPoint() const;
 	bool IsTargetPointOutOfBounds() const;
@@ -85,11 +87,13 @@ private:
 	UFUNCTION(BlueprintCallable, Category="Moving Platform")
 	void ChangeTargetPoint();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Moving Platform", meta=(AllowPrivateAccess = "true"))
+	float PlatformOffset{0.f};
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Moving Platform", meta=(AllowPrivateAccess="true"))
 	bool bInheritPitch{false};
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Moving Platform", meta=(AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Moving Platform", meta=(AllowPrivateAccess="true"))
 	bool bInheritYaw{false};
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Moving Platform", meta=(AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Moving Platform", meta=(AllowPrivateAccess="true"))
 	bool bInheritRoll{false};
 	float GetCurrentPlatformPosition(const float PathProgress) const;
 	void MoveAlongSpline(const float PathProgress) const;

@@ -27,15 +27,16 @@ void AMovingPlatform::BeginPlay()
 
 	if (StartPoint > PlatformPath->GetNumberOfSplinePoints())
 	{
-		StartPoint = PlatformPath->GetNumberOfSplinePoints();
 		UE_LOG(
 			   LogTemp,
 			   Error,
 			   TEXT(
-				   "Illegal value. Strat point index can't be greater than the max number of points in spline.\nCheck the option in %s"
+				   "Illegal value %d. Strat point index can't be greater than the max number of points in spline.\nCheck the option in %s"
 			   ),
+			   StartPoint,
 			   *this->GetName()
 			  );
+		StartPoint = PlatformPath->GetNumberOfSplinePoints();
 	}
 
 	if (WaitDuration > 0.f && StopoverPointsSet.Num() == 0)
@@ -44,6 +45,28 @@ void AMovingPlatform::BeginPlay()
 		TargetPoint = bIsReversed ? PreviousPoint - 1 : PreviousPoint + 1;
 	}
 
+	// CalculateStopoverPoinstArray();
+	Super::BeginPlay();
+}
+
+// Called every frame
+void AMovingPlatform::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+}
+
+void AMovingPlatform::SetMovingPlatformMode(const EPlatformMode NewMode)
+{
+	if (NewMode == CurrentMode)
+	{
+		return;
+	}
+
+	CurrentMode = NewMode;
+}
+
+void AMovingPlatform::CalculateStopoverPoinstArray()
+{
 	if (StopoverPointsSet.Num() > 0)
 	{
 		if (!StopoverPointsSet.Contains(0))
@@ -82,29 +105,33 @@ void AMovingPlatform::BeginPlay()
 
 		StopoverPointsArray = ClearSet.Array();
 		StopoverPointsArray.Sort();
-		StopoverPointsSet.Empty();
 		ClearSet.Empty();
-		PreviousPoint = bIsReversed ? StopoverPointsArray[GetLastIndex()] : StopoverPointsArray[0];
-		TargetPoint = bIsReversed ? StopoverPointsArray[GetLastIndex() - 1] : StopoverPointsArray[1];
+
+		if (StartPoint > GetLastIndex())
+		{
+			StartPoint = GetLastIndex();
+			UE_LOG(
+				   LogTemp,
+				   Error,
+				   TEXT(
+					   "Illegal value %d of start point.\nIt can't be more than the last index of StopoverPointsSet.\n Check actor %s"
+				   ),
+				   StartPoint,
+				   *this->GetName()
+				  );
+		}
+
+		if (StartPoint == 0 && bIsReversed)
+		{
+			StartPoint = GetLastIndex();
+		}
+		else if (StartPoint == GetLastIndex() && !bIsReversed)
+		{
+			StartPoint = 0;
+		}
+		PreviousPoint = StopoverPointsArray[StartPoint];
+		TargetPoint = bIsReversed ? StopoverPointsArray[StartPoint - 1] : StopoverPointsArray[StartPoint + 1];
 	}
-
-	Super::BeginPlay();
-}
-
-// Called every frame
-void AMovingPlatform::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-}
-
-void AMovingPlatform::SetMovingPlatformMode(const EPlatformMode NewMode)
-{
-	if (NewMode == CurrentMode)
-	{
-		return;
-	}
-
-	CurrentMode = NewMode;
 }
 
 int32 AMovingPlatform::GetLastIndex() const
@@ -133,7 +160,6 @@ bool AMovingPlatform::IsTargetPointOutOfBounds() const
 	return TargetPoint >= PlatformPath->GetNumberOfSplinePoints();
 }
 
-
 void AMovingPlatform::ContinueMovement()
 {
 	StartWaitTimer();
@@ -147,7 +173,7 @@ void AMovingPlatform::ContinueMovement()
 void AMovingPlatform::CalculateNextPoint()
 {
 	TargetPoint = bIsReversed ? TargetPoint - 1 : TargetPoint + 1;
-	const bool bIsOutOfBounds =	IsTargetPointOutOfBounds();
+	const bool bIsOutOfBounds = IsTargetPointOutOfBounds();
 
 	switch (CurrentMode)
 	{
@@ -288,7 +314,7 @@ float AMovingPlatform::GetCurrentPlatformPosition(const float PathProgress) cons
 
 void AMovingPlatform::MoveAlongSpline(const float PathProgress) const
 {
-	const float CurrentPosition = GetCurrentPlatformPosition(PathProgress);
+	const float CurrentPosition = GetCurrentPlatformPosition(PathProgress) + PlatformOffset;
 	const FVector NewLocation = PlatformPath->GetLocationAtDistanceAlongSpline(
 																			   CurrentPosition,
 																			   ESplineCoordinateSpace::World
@@ -298,7 +324,7 @@ void AMovingPlatform::MoveAlongSpline(const float PathProgress) const
 
 void AMovingPlatform::RotateAlongSpline(const float PathProgress) const
 {
-	const float CurrentPosition = GetCurrentPlatformPosition(PathProgress);
+	const float CurrentPosition = GetCurrentPlatformPosition(PathProgress) + PlatformOffset;
 	const FRotator CurrentRotation = PlatformMesh->GetComponentRotation();
 	const FRotator SplineRotation = PlatformPath->GetRotationAtDistanceAlongSpline(
 		 CurrentPosition,
