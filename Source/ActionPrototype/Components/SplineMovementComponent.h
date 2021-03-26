@@ -67,9 +67,10 @@ private:
 	AActor* TargetActor{nullptr};
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Spline Mover", meta=(AllowPrivateAccess="true"))
 	USplineComponent* Spline{nullptr};
+	void SetSpline(AActor* ActorWithSpline);
 	int32 GetSplineLastPoint() const;
 	bool HasOwnerAndSpline() const;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spline Mover", meta=(AllowPrivateAccess="true"))
 	ESplineMovementMode MovementMode{ESplineMovementMode::OneWay};
 
@@ -83,12 +84,19 @@ private:
 		meta=(AllowPrivateAccess="true", ClampMin="0.0")
 	)
 	float WaitDuration{3.f};
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Spline Mover", meta=(AllowPrivateAccess="true"))
+	UPROPERTY(BlueprintReadOnly, Category="Spline Mover", meta=(AllowPrivateAccess="true"))
 	FTimerHandle WaitDurationHandle{};
 	void StartWaitTimer();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spline Mover|Path", meta=(AllowPrivateAccess="true", ClampMin="0"))
+	UPROPERTY(
+		EditAnywhere,
+		BlueprintReadOnly,
+		Category="Spline Mover|Path",
+		meta=(AllowPrivateAccess="true", ClampMin="0")
+	)
 	int32 StartPointIndex{0};
+	UFUNCTION(BlueprintCallable, Category="Spline Mover|Path")
+	void SetStartPointIndex(const int32 NewPointIndex);
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Spline Mover|Path", meta=(AllowPrivateAccess="true"))
 	int32 PreviousPointIndex{0};
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Spline Mover|Path", meta=(AllowPrivateAccess="true"))
@@ -97,12 +105,18 @@ private:
 	TArray<int32> PathPoints{};
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spline Mover|Path", meta=(AllowPrivateAccess="true"))
 	bool bUseCustomPoints{false};
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spline Mover|Path", meta=(AllowPrivateAccess="true", EditCondition="bUseCustomPoints"))
+	UPROPERTY(
+		EditAnywhere,
+		BlueprintReadWrite,
+		Category="Spline Mover|Path",
+		meta=(AllowPrivateAccess="true", EditCondition="bUseCustomPoints")
+	)
 	TSet<int32> CustomPathPoints{};
 	bool IsPointIndexOutOfBounds(const int32 PointIndex) const;
 	void FillPathPoints();
-	void CalculateStartPointIndex();
+	void CheckStartPointIndex();
 	void CalculateNextPointIndex();
+	void PlaceAndRotateAtStartLocation();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spline Mover|Movement", meta=(AllowPrivateAccess="true"))
 	float Speed{30.f};
@@ -115,8 +129,15 @@ private:
 	float GetCurrentSplinePosition(const float PathProgress) const;
 	void SetLocationAlongSpline(const float PathProgress) const;
 	void SetRotationAlongSpline(const float PathProgress) const;
+	FRotator CreateSplineRotator(const FRotator OwnerRotation, const FRotator SplineRotation) const;
 	UFUNCTION(BlueprintCallable, Category="Spline Mover")
-	void MoveAlongSpline(const float PathProgress);
+	void MoveAlongSpline(const float PathProgress) const;
 	UFUNCTION(BlueprintCallable, Category="Spline Mover")
 	void ContinueMoveAlongSpline();
+
+	UFUNCTION(BlueprintCallable, Category="Spline Mover")
+	void ProcessConstruction(
+		AActor* ActorWithSpline,
+		UPARAM(ref) int32& NewStartPointIndex,
+		UPARAM(ref) TSet<int32>& NewCustomPathPointsSet);
 };

@@ -17,16 +17,9 @@ USplineMovementComponent::USplineMovementComponent()
 // Called when the game starts
 void USplineMovementComponent::BeginPlay()
 {
-	Owner = GetOwner();
-
-	if (TargetActor != nullptr)
-	{
-		Spline = Cast<USplineComponent>(TargetActor->GetComponentByClass(USplineComponent::StaticClass()));
-	}
-
+	SetSpline(TargetActor);
 	FillPathPoints();
-	CalculateStartPointIndex();
-
+	CheckStartPointIndex();
 	Super::BeginPlay();
 }
 
@@ -47,6 +40,16 @@ void USplineMovementComponent::BroadcastOnWaitFinish() const
 	OnWaitFinish.Broadcast();
 }
 
+void USplineMovementComponent::SetSpline(AActor* ActorWithSpline)
+{
+	Owner = GetOwner();
+
+	if (ActorWithSpline != nullptr)
+	{
+		Spline = Cast<USplineComponent>(ActorWithSpline->GetComponentByClass(USplineComponent::StaticClass()));
+	}
+}
+
 int32 USplineMovementComponent::GetSplineLastPoint() const
 {
 	const int32 NumberOfPoints = Spline->GetNumberOfSplinePoints();
@@ -57,6 +60,7 @@ bool USplineMovementComponent::HasOwnerAndSpline() const
 {
 	return Owner != nullptr && Spline != nullptr;
 }
+
 
 void USplineMovementComponent::StartWaitTimer()
 {
@@ -72,6 +76,12 @@ void USplineMovementComponent::StartWaitTimer()
 							  false
 							 );
 	}
+}
+
+void USplineMovementComponent::SetStartPointIndex(const int32 NewPointIndex)
+{
+	StartPointIndex = NewPointIndex;
+	CheckStartPointIndex();
 }
 
 bool USplineMovementComponent::IsPointIndexOutOfBounds(const int32 PointIndex) const
@@ -113,6 +123,12 @@ void USplineMovementComponent::FillPathPoints()
 		PathPoints = UpdatedPathPoints.Array();
 		PathPoints.Sort();
 		UpdatedPathPoints.Empty();
+		CustomPathPoints.Empty();
+
+		for (const int32 Point : PathPoints)
+		{
+			CustomPathPoints.Add(Point);
+		}
 	}
 	else
 	{
@@ -128,8 +144,13 @@ void USplineMovementComponent::FillPathPoints()
 	}
 }
 
-void USplineMovementComponent::CalculateStartPointIndex()
+void USplineMovementComponent::CheckStartPointIndex()
 {
+	if (!HasOwnerAndSpline())
+	{
+		return;
+	}
+
 	if (IsPointIndexOutOfBounds(StartPointIndex))
 	{
 		FString OwnerName{TEXT("NULL")};
@@ -177,11 +198,33 @@ void USplineMovementComponent::CalculateNextPointIndex()
 			if (bIsOutOfBounds)
 			{
 				bIsReversed = !bIsReversed;
-				NextPointIndex = bIsReversed ? 1 : PreviousPointIndex - 1;
+				NextPointIndex = bIsReversed ? PreviousPointIndex - 1 : PreviousPointIndex + 1;
 			}
 		default:
 			break;
 	}
+}
+
+void USplineMovementComponent::PlaceAndRotateAtStartLocation()
+{
+	if (!HasOwnerAndSpline())
+	{
+		return;
+	}
+
+	const float SplinePosition = Spline->GetDistanceAlongSplineAtSplinePoint(PathPoints[StartPointIndex]);
+	const FVector StartLocation = Spline->GetLocationAtDistanceAlongSpline(
+																		   SplinePosition,
+																		   ESplineCoordinateSpace::World
+																		  );
+	const FRotator SplineRotation = Spline->GetRotationAtDistanceAlongSpline(
+																			 SplinePosition,
+																			 ESplineCoordinateSpace::World
+																			);
+	const FRotator OwnerRotation = Owner->GetActorRotation();
+	const FRotator StartRotation = CreateSplineRotator(OwnerRotation, SplineRotation);
+
+	Owner->SetActorLocationAndRotation(StartLocation, StartRotation);
 }
 
 float USplineMovementComponent::GetCurrentSplinePosition(const float PathProgress) const
@@ -223,19 +266,31 @@ void USplineMovementComponent::SetRotationAlongSpline(const float PathProgress) 
 	}
 
 	const float SplinePosition = GetCurrentSplinePosition(PathProgress);
-	const FRotator CurrentRotation = Owner->GetActorRotation();
+	const FRotator OwnerRotation = Owner->GetActorRotation();
 	const FRotator SplineRotation = Spline->GetRotationAtDistanceAlongSpline(
 																			 SplinePosition,
 																			 ESplineCoordinateSpace::World
 																			);
-	const float NewPitch = bInheritPitch ? SplineRotation.Pitch : CurrentRotation.Pitch;
-	const float NewYaw = bInheritYaw ? SplineRotation.Yaw : CurrentRotation.Yaw;
-	const float NewRoll = bInheritRoll ? SplineRotation.Roll : CurrentRotation.Roll;
-	const FRotator NewRotation = FRotator(NewPitch, NewYaw, NewRoll);
+	const FRotator NewRotation = CreateSplineRotator(OwnerRotation, SplineRotation);
 	Owner->SetActorRotation(NewRotation);
 }
 
-void USplineMovementComponent::MoveAlongSpline(const float PathProgress)
+FRotator USplineMovementComponent::CreateSplineRotator(
+	const FRotator OwnerRotation,
+	const FRotator SplineRotation) const
+{
+	if (!HasOwnerAndSpline())
+	{
+		return FRotator::ZeroRotator;
+	}
+
+	const float NewPitch = bInheritPitch ? SplineRotation.Pitch : OwnerRotation.Pitch;
+	const float NewYaw = bInheritYaw ? SplineRotation.Yaw : OwnerRotation.Yaw;
+	const float NewRoll = bInheritRoll ? SplineRotation.Roll : OwnerRotation.Roll;
+	return FRotator(NewPitch, NewYaw, NewRoll);
+}
+
+void USplineMovementComponent::MoveAlongSpline(const float PathProgress) const
 {
 	if (!HasOwnerAndSpline())
 	{
@@ -252,7 +307,7 @@ void USplineMovementComponent::ContinueMoveAlongSpline()
 	{
 		return;
 	}
-	
+
 	if (WaitDuration > 0.f)
 	{
 		OnArriveAtPoint.Broadcast(PathPoints[NextPointIndex]);
@@ -262,11 +317,25 @@ void USplineMovementComponent::ContinueMoveAlongSpline()
 	{
 		OnStartMovement.Broadcast();
 	}
-	
+
 	if (MovementMode == ESplineMovementMode::OneWay && IsPointIndexOutOfBounds(NextPointIndex))
 	{
 		return;
 	}
 
 	StartWaitTimer();
+}
+
+void USplineMovementComponent::ProcessConstruction(
+	AActor* ActorWithSpline,
+	int32& NewStartPointIndex,
+	TSet<int32>& NewCustomPathPointsSet)
+{
+	CustomPathPoints = NewCustomPathPointsSet;
+	SetSpline(ActorWithSpline);
+	FillPathPoints();
+	NewCustomPathPointsSet = CustomPathPoints;
+	NewStartPointIndex = FMath::Clamp(NewStartPointIndex, 0, PathPoints.Num() - 1);
+	SetStartPointIndex(NewStartPointIndex);
+	PlaceAndRotateAtStartLocation();
 }
