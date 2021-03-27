@@ -17,6 +17,11 @@ USplineMovementComponent::USplineMovementComponent()
 // Called when the game starts
 void USplineMovementComponent::BeginPlay()
 {
+	if (bUseTravelTime)
+	{
+		TravelTime = InitialTravelTime;
+	}
+
 	SetSpline(TargetActor);
 	FillPathPoints();
 	CheckStartPointIndex();
@@ -227,6 +232,14 @@ void USplineMovementComponent::PlaceAndRotateAtStartLocation()
 	Owner->SetActorLocationAndRotation(StartLocation, StartRotation);
 }
 
+float USplineMovementComponent::CalculateTravelTimeThroughSpeed() const
+{
+	const float StartDistance = Spline->GetDistanceAlongSplineAtSplinePoint(PathPoints[PreviousPointIndex]);
+	const float FinishDistance = Spline->GetDistanceAlongSplineAtSplinePoint(PathPoints[NextPointIndex]);
+	const float DistanceBetweenPoints = FMath::Abs(FinishDistance - StartDistance);
+	return DistanceBetweenPoints / Speed;
+}
+
 float USplineMovementComponent::GetCurrentSplinePosition(const float PathProgress) const
 {
 	float Start;
@@ -316,6 +329,11 @@ void USplineMovementComponent::ContinueMoveAlongSpline()
 	else
 	{
 		OnStartMovement.Broadcast();
+	}
+
+	if (!bUseTravelTime)
+	{
+		TravelTime = CalculateTravelTimeThroughSpeed();
 	}
 
 	if (MovementMode == ESplineMovementMode::OneWay && IsPointIndexOutOfBounds(NextPointIndex))

@@ -18,6 +18,18 @@ enum class ESplineMovementMode : uint8
 	Manual
 };
 
+USTRUCT(BlueprintType)
+struct FSplineMover
+{
+	GENERATED_BODY()
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spline Mover")
+	ESplineMovementMode MovementMode{ESplineMovementMode::OneWay};
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spline Mover")
+	float WaitDuration{3.f};
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spline Mover")
+	bool bIsReverted{false};
+};
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnStartMovement);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnArriveAtPoint, int32, SplinePointIndex);
@@ -119,7 +131,25 @@ private:
 	void PlaceAndRotateAtStartLocation();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spline Mover|Movement", meta=(AllowPrivateAccess="true"))
+	bool bUseTravelTime{false};
+	UPROPERTY(
+		EditAnywhere,
+		BlueprintReadWrite,
+		Category="Spline Mover|Movement",
+		meta=(AllowPrivateAccess="true", ClampMin="0.0", EditCondition="!bUseTimeTravel")
+	)
 	float Speed{30.f};
+	UPROPERTY(
+		EditAnywhere,
+		BlueprintReadWrite,
+		Category="Spline Mover|Movement",
+		meta=(AllowPrivateAccess="true", ClampMin="0.0", EditCondition="bUseTimeTravel")
+	)
+	float InitialTravelTime{5.f};
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Spline Mover|Movement", meta=(AllowPrivateAccess="true"))
+	float TravelTime{1.f};
+	float CalculateTravelTimeThroughSpeed() const;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spline Mover|Movement", meta=(AllowPrivateAccess="true"))
 	bool bInheritPitch{false};
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spline Mover|Movement", meta=(AllowPrivateAccess="true"))
