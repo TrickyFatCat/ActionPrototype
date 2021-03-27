@@ -17,14 +17,10 @@ USplineMovementComponent::USplineMovementComponent()
 // Called when the game starts
 void USplineMovementComponent::BeginPlay()
 {
-	if (bUseTravelTime)
-	{
-		TravelTime = InitialTravelTime;
-	}
-
 	SetSpline(TargetActor);
 	FillPathPoints();
 	CheckStartPointIndex();
+	TravelTime = CalculateTravelTimeThroughSpeed();
 	Super::BeginPlay();
 }
 
@@ -331,29 +327,34 @@ void USplineMovementComponent::ContinueMoveAlongSpline()
 		OnStartMovement.Broadcast();
 	}
 
-	if (!bUseTravelTime)
-	{
-		TravelTime = CalculateTravelTimeThroughSpeed();
-	}
-
 	if (MovementMode == ESplineMovementMode::OneWay && IsPointIndexOutOfBounds(NextPointIndex))
 	{
 		return;
 	}
 
+	TravelTime = CalculateTravelTimeThroughSpeed();
 	StartWaitTimer();
 }
 
-void USplineMovementComponent::ProcessConstruction(
-	AActor* ActorWithSpline,
-	int32& NewStartPointIndex,
-	TSet<int32>& NewCustomPathPointsSet)
+void USplineMovementComponent::ProcessConstruction(FSplineMoverParameters& SplineMoverParameters)
 {
-	CustomPathPoints = NewCustomPathPointsSet;
-	SetSpline(ActorWithSpline);
+	MovementMode = SplineMoverParameters.MovementMode;
+	WaitDuration = SplineMoverParameters.WaitDuration;
+	bIsReversed = SplineMoverParameters.bIsReversed;
+	bUseCustomPoints = SplineMoverParameters.bUseCustomPoints;
+	Speed = SplineMoverParameters.Speed;
+	bInheritPitch = SplineMoverParameters.bInheritPitch;
+	bInheritYaw = SplineMoverParameters.bInheritYaw;
+	bInheritRoll = SplineMoverParameters.bInheritRoll;
+	CustomPathPoints = SplineMoverParameters.CustomPathPoints;
+	SetSpline(SplineMoverParameters.ActorWithSpline);
 	FillPathPoints();
-	NewCustomPathPointsSet = CustomPathPoints;
-	NewStartPointIndex = FMath::Clamp(NewStartPointIndex, 0, PathPoints.Num() - 1);
-	SetStartPointIndex(NewStartPointIndex);
+	SplineMoverParameters.CustomPathPoints = CustomPathPoints;
+	SplineMoverParameters.StartPointIndex = FMath::Clamp(
+														 SplineMoverParameters.StartPointIndex,
+														 0,
+														 PathPoints.Num() - 1
+														);
+	SetStartPointIndex(SplineMoverParameters.StartPointIndex);
 	PlaceAndRotateAtStartLocation();
 }

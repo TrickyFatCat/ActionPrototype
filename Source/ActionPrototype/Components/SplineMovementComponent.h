@@ -9,7 +9,7 @@
 
 class USplineComponent;
 
-UENUM()
+UENUM(BlueprintType)
 enum class ESplineMovementMode : uint8
 {
 	OneWay,
@@ -19,15 +19,31 @@ enum class ESplineMovementMode : uint8
 };
 
 USTRUCT(BlueprintType)
-struct FSplineMover
+struct FSplineMoverParameters
 {
 	GENERATED_BODY()
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spline Mover")
+	AActor* ActorWithSpline{nullptr};
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spline Mover")
 	ESplineMovementMode MovementMode{ESplineMovementMode::OneWay};
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spline Mover")
 	float WaitDuration{3.f};
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spline Mover")
-	bool bIsReverted{false};
+	bool bIsReversed{false};
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spline Mover")
+	int32 StartPointIndex{0};
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spline Mover")
+	bool bUseCustomPoints{false};
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spline Mover")
+	TSet<int32> CustomPathPoints{};
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spline Mover")
+	float Speed{100.f};
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spline Mover")
+	bool bInheritPitch{false};
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spline Mover")
+	bool bInheritYaw{false};
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spline Mover")
+	bool bInheritRoll{false};
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnStartMovement);
@@ -77,7 +93,7 @@ private:
 	AActor* Owner{nullptr};
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Spline Mover", meta=(AllowPrivateAccess="true"))
 	AActor* TargetActor{nullptr};
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Spline Mover", meta=(AllowPrivateAccess="true"))
+	UPROPERTY(BlueprintReadOnly, Category="Spline Mover", meta=(AllowPrivateAccess="true"))
 	USplineComponent* Spline{nullptr};
 	void SetSpline(AActor* ActorWithSpline);
 	int32 GetSplineLastPoint() const;
@@ -85,9 +101,6 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spline Mover", meta=(AllowPrivateAccess="true"))
 	ESplineMovementMode MovementMode{ESplineMovementMode::OneWay};
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spline Mover", meta=(AllowPrivateAccess="true"))
-	bool bIsReversed{false};
 
 	UPROPERTY(
 		EditAnywhere,
@@ -99,6 +112,9 @@ private:
 	UPROPERTY(BlueprintReadOnly, Category="Spline Mover", meta=(AllowPrivateAccess="true"))
 	FTimerHandle WaitDurationHandle{};
 	void StartWaitTimer();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spline Mover", meta=(AllowPrivateAccess="true"))
+	bool bIsReversed{false};
 
 	UPROPERTY(
 		EditAnywhere,
@@ -130,22 +146,13 @@ private:
 	void CalculateNextPointIndex();
 	void PlaceAndRotateAtStartLocation();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spline Mover|Movement", meta=(AllowPrivateAccess="true"))
-	bool bUseTravelTime{false};
 	UPROPERTY(
 		EditAnywhere,
 		BlueprintReadWrite,
 		Category="Spline Mover|Movement",
-		meta=(AllowPrivateAccess="true", ClampMin="0.0", EditCondition="!bUseTimeTravel")
+		meta=(AllowPrivateAccess="true", ClampMin="0.0", EditCondition="!bUseRawTravelTime")
 	)
 	float Speed{30.f};
-	UPROPERTY(
-		EditAnywhere,
-		BlueprintReadWrite,
-		Category="Spline Mover|Movement",
-		meta=(AllowPrivateAccess="true", ClampMin="0.0", EditCondition="bUseTimeTravel")
-	)
-	float InitialTravelTime{5.f};
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Spline Mover|Movement", meta=(AllowPrivateAccess="true"))
 	float TravelTime{1.f};
 	float CalculateTravelTimeThroughSpeed() const;
@@ -166,8 +173,5 @@ private:
 	void ContinueMoveAlongSpline();
 
 	UFUNCTION(BlueprintCallable, Category="Spline Mover")
-	void ProcessConstruction(
-		AActor* ActorWithSpline,
-		UPARAM(ref) int32& NewStartPointIndex,
-		UPARAM(ref) TSet<int32>& NewCustomPathPointsSet);
+	void ProcessConstruction(UPARAM(ref) FSplineMoverParameters& SplineMoverParameters);
 };
