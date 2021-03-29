@@ -4,7 +4,6 @@
 #include "FloatingPlatform.h"
 
 
-#include "ActionPrototype/Components/SplineMovementComponent.h"
 #include "Components/SplineComponent.h"
 
 
@@ -269,7 +268,7 @@ void AFloatingPlatform::CalculatePointIndex()
 				CalculateNextPointIndex(PreviousPointIndex);
 			}
 			break;
-		case ESplineMovementMode::ReversedLoop:
+		case EFloatingPlatformMode::ReversedLoop:
 			if (bIsOutOfBounds)
 			{
 				bIsReversed = !bIsReversed;
