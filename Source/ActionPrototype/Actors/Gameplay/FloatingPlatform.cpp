@@ -28,6 +28,12 @@ void AFloatingPlatform::BeginPlay()
 	CheckStartPointIndex();
 	PreviousPointIndex = StartPointIndex;
 	NextPointIndex = StartPointIndex;
+
+	if (bAutoStart)
+	{
+		StartMovement();
+	}
+	
 	Super::BeginPlay();
 }
 
@@ -39,35 +45,48 @@ void AFloatingPlatform::Tick(float DeltaTime)
 
 void AFloatingPlatform::SetTargetSpline(const AActor* TargetActor)
 {
-	if (TargetActor != nullptr)
+	if (TargetActor == nullptr)
 	{
-		TargetSpline = Cast<USplineComponent>(TargetActor->GetComponentByClass(USplineComponent::StaticClass()));
+		return;
+	}
+	
+	TargetSpline = Cast<USplineComponent>(TargetActor->GetComponentByClass(USplineComponent::StaticClass()));
 
-		if (TargetSpline == nullptr)
-		{
-			UE_LOG(
-				   LogTemp,
-				   Error,
-				   TEXT(
-					   "Invalid TargetActor in %s. Chosen actor %s doesn't have a spline component. Choose another actor instead."
-				   ),
-				   *this->GetName(),
-				   *TargetActor->GetName()
-				  );
-		}
+	if (TargetSpline == nullptr)
+	{
+		UE_LOG(
+			   LogTemp,
+			   Error,
+			   TEXT(
+				   "Invalid TargetActor in %s. Chosen actor %s doesn't have a spline component. Choose another actor instead."
+			   ),
+			   *this->GetName(),
+			   *TargetActor->GetName()
+			  );
 	}
 }
 
 void AFloatingPlatform::StartMovement()
 {
+	if (MovementMode == EFloatingPlatformMode::Manual && CurrentState != EFloatingPlatformState::Move)
+	{
+		return;
+	}
+
 	CurrentState = EFloatingPlatformState::Move;
 	OnStartMovement();
+	OnPlatformStartMovement.Broadcast();
 }
 
 void AFloatingPlatform::StopMovement()
 {
+	if (MovementMode == EFloatingPlatformMode::Manual && CurrentState != EFloatingPlatformState::Idle)
+	{
+		return;
+	}
 	CurrentState = EFloatingPlatformState::Idle;
 	OnStopMovement();
+	OnPlatformStopMovement.Broadcast();
 }
 
 void AFloatingPlatform::MoveToPoint(const int32 TargetPointIndex)
@@ -173,7 +192,8 @@ void AFloatingPlatform::ContinueMovementAlongSpline()
 	}
 
 	CalculatePointIndex();
-	OnArriveAtPoint(NextPointIndex);
+	OnArrivedAtPoint(NextPointIndex);
+	OnPlatformArrivedAtPoint.Broadcast(NextPointIndex);
 
 	if (MovementMode == EFloatingPlatformMode::Manual)
 	{
@@ -183,7 +203,7 @@ void AFloatingPlatform::ContinueMovementAlongSpline()
 	CalculateTravelTime();
 	if (WaitDuration <= 0.f)
 	{
-		OnStartMovement();
+		StartMovement();
 	}
 	else
 	{
@@ -199,6 +219,7 @@ void AFloatingPlatform::StartWaitTimer()
 	{
 		CurrentState = EFloatingPlatformState::Wait;
 		OnWaitStarted();
+		OnPlatformWaitStarted.Broadcast();
 		TimerManager.SetTimer(WaitTimerHandle, this, &AFloatingPlatform::FinishWaitTimer, WaitDuration, false);
 	}
 }
@@ -207,6 +228,7 @@ void AFloatingPlatform::FinishWaitTimer()
 {
 	CurrentState = EFloatingPlatformState::Move;
 	OnWaitFinished();
+	OnPlatformWaitFinished.Broadcast();
 }
 
 void AFloatingPlatform::CheckStartPointIndex()
@@ -220,6 +242,10 @@ void AFloatingPlatform::CheckStartPointIndex()
 	if (StartPointIndex >= PathPoints.Num())
 	{
 		StartPointIndex = PathPoints.Num() - 1;
+	}
+	else if (StartPointIndex < 0)
+	{
+		StartPointIndex = 0;
 	}
 }
 
@@ -325,6 +351,12 @@ void AFloatingPlatform::CalculateTravelTime()
 
 void AFloatingPlatform::ProcessConstructionScript()
 {
+	if (ActorWithSpline == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Can't process construction in %s, ActorWithSpline is null."), *this->GetName());
+		return;
+	}
+	
 	PathPoints.Empty();
 	SetTargetSpline(ActorWithSpline);
 	FillPathPoints();
