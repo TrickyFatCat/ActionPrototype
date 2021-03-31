@@ -10,6 +10,7 @@ class USphereComponent;
 class UStaticMeshComponent;
 class UParticleSystemComponent;
 class UTimelineComponent;
+class UParticleSystem;
 
 UCLASS()
 class ACTIONPROTOTYPE_API ABasePickupItem : public AActor
@@ -28,6 +29,10 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Pickup|Effects")
+	UParticleSystem* PickupMainParticles{nullptr};
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Pickup|Effects")
+	USoundBase* PickupSound{nullptr};
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Pickup|Animation")
 	UCurveFloat* LocationAnimationCurve{nullptr};
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Pickup|Animation")
@@ -41,6 +46,7 @@ public:
 protected:
 	UFUNCTION(BlueprintImplementableEvent, Category="Pickup Item")
 	void OnPickup();
+	virtual void ProcessPickupEffect();
 	
 	UFUNCTION(BlueprintNativeEvent)
     void TriggerOverlapBegin(

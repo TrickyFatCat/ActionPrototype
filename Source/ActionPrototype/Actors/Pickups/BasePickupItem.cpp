@@ -5,6 +5,7 @@
 #include "Components/SphereComponent.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Components/TimelineComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 
 // Sets default values
@@ -57,6 +58,10 @@ void ABasePickupItem::SetAnimationSpeed(const float NewAnimationSpeed)
 	PickupAnimationTimeline->SetPlayRate(AnimationSpeed);
 }
 
+void ABasePickupItem::ProcessPickupEffect()
+{
+}
+
 void ABasePickupItem::AnimateMeshLocation(const float AnimationProgress) const
 {
 	const FVector NewLocation = MeshInitialLocation + MeshLocationOffset * AnimationProgress;
@@ -84,7 +89,18 @@ void ABasePickupItem::TriggerOverlapBegin_Implementation(
 	bool bFromSweep,
 	const FHitResult& SweepResult)
 {
+	if (PickupMainParticles != nullptr)
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(this, PickupMainParticles, MeshInitialLocation);
+	}
+
+	if (PickupSound != nullptr)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, PickupSound, MeshInitialLocation);
+	}
+	
 	OnPickup();
+	Destroy();
 }
 
 void ABasePickupItem::TriggerOverlapEnd_Implementation(
