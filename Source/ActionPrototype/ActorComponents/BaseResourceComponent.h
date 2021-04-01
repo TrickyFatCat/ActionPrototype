@@ -75,14 +75,14 @@ private:
 		Category="Resource Component",
 		meta=(AllowPrivateAccess="true", ClampMin="0", ClampMax="1", EditCondition="bAutorestore")
 	)
-	float AutorestoreMinThreshold{0.f};
+	float RestoreMinThreshold{0.f};
 	UPROPERTY(
 		EditAnywhere,
 		BlueprintReadWrite,
 		Category="Resource Component",
 		meta=(AllowPrivateAccess="true", ClampMin="0", ClampMax="1", EditCondition="bAutorestore")
 	)
-	float AutorestoreMaxThreshold{MaxValue};
+	float RestoreMaxThreshold{MaxValue};
 	UPROPERTY(
 		EditAnywhere,
 		BlueprintReadWrite,
@@ -90,7 +90,6 @@ private:
 		meta=(AllowPrivateAccess="true", ClampMin="0", EditCondition="bAutorestore")
 	)
 	float RestoreAmount{1.f};
-
 	UPROPERTY(
 		EditAnywhere,
 		BlueprintReadOnly,
@@ -100,8 +99,22 @@ private:
 	float RestoreFrequency{1.f};
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Resource Component", meta=(AllowPrivateAccess="true"))
 	float RestoreDelayTime{1.f};
+	FTimerDelegate RestoreDelayDelegate{};
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Resource Component", meta=(AllowPrivateAccess="true"))
 	FTimerHandle RestoreTimerHandle{};
 	UFUNCTION()
 	void StartAutoRestore();
+	UFUNCTION()
+	void StopAutoRestore();
+	UFUNCTION()
+	void RestoreResource();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Resource Component", meta=(AllowPrivateAccess="true"))
+	float RestoreStartDelay{1.f};
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Resource Component", meta=(AllowPrivateAccess="true"))
+	FTimerHandle RestoreStartDelayHandle{};
+	UFUNCTION()
+	void StartDelayTimer();
+	UFUNCTION()
+	void StopDelayTimer();
 };

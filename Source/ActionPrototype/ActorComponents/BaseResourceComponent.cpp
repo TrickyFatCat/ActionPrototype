@@ -19,13 +19,16 @@ void UBaseResourceComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
+	RestoreDelayDelegate.BindUFunction(this, FName("IncreaseValue"), RestoreAmount);
 	// ...
-	
 }
 
 
 // Called every frame
-void UBaseResourceComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UBaseResourceComponent::TickComponent(
+	float DeltaTime,
+	ELevelTick TickType,
+	FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
@@ -83,7 +86,14 @@ float UBaseResourceComponent::SetRestoreFrequency(float NewRestoreFrequency)
 {
 	if (NewRestoreFrequency <= 0.f)
 	{
-		UE_LOG(LogTemp, Error, TEXT("Invalid value %f of NewRestoreFrequency in %s of %s."), NewRestoreFrequency, *this->GetName(), *GetOwner()->GetName());
+		UE_LOG(
+			   LogTemp,
+			   Error,
+			   TEXT("Invalid value %f of NewRestoreFrequency in %s of %s."),
+			   NewRestoreFrequency,
+			   *this->GetName(),
+			   *GetOwner()->GetName()
+			  );
 		NewRestoreFrequency = 1.f;
 	}
 
@@ -94,5 +104,62 @@ float UBaseResourceComponent::SetRestoreFrequency(float NewRestoreFrequency)
 
 void UBaseResourceComponent::StartAutoRestore()
 {
+	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+
+	if (RestoreDelayTime <= 0.f || TimerManager.IsTimerActive(RestoreTimerHandle))
+	{
+		return;
+	}
+
+	TimerManager.SetTimer(RestoreTimerHandle, this, &UBaseResourceComponent::RestoreResource, RestoreDelayTime, true);
 }
 
+void UBaseResourceComponent::StopAutoRestore()
+{
+	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+
+	if (TimerManager.IsTimerActive(RestoreTimerHandle))
+	{
+		TimerManager.ClearTimer(RestoreTimerHandle);
+	}
+}
+
+void UBaseResourceComponent::RestoreResource()
+{
+	IncreaseValue(RestoreAmount);
+	const float TargetValue = MaxValue * RestoreMaxThreshold;
+
+	if (CurrentValue >= TargetValue)
+	{
+		CurrentValue = TargetValue;
+		StopAutoRestore();
+	}
+}
+
+void UBaseResourceComponent::StartDelayTimer()
+{
+	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+
+	if (RestoreStartDelay <= 0.f || TimerManager.IsTimerActive(RestoreStartDelayHandle))
+	{
+		return;
+	}
+	
+	TimerManager.SetTimer(
+						  RestoreStartDelayHandle,
+						  this,
+						  &UBaseResourceComponent::StartAutoRestore,
+						  RestoreStartDelay,
+						  false
+						 );
+}
+
+void UBaseResourceComponent::StopDelayTimer()
+{
+	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+
+	if (TimerManager.IsTimerActive(RestoreStartDelayHandle))
+	{
+		TimerManager.ClearTimer(RestoreStartDelayHandle);
+	}
+}
