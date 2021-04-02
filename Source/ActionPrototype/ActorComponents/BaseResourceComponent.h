@@ -35,7 +35,7 @@ public:
 	void DecreaseValue(const float Amount);
 	UFUNCTION(BlueprintCallable, Category="Resource Component")
 	void IncreaseMaxValue(const float Amount, const bool bClampCurrentValue = true);
-	UFUNCTION(BlueprintCallable, Category="Recource Component")
+	UFUNCTION(BlueprintCallable, Category="Resource Component")
 	void DecreaseMaxValue(const float Amount, const bool bClampCurrentValue = true);
 	UFUNCTION(BlueprintPure, Category="Resource Component")
 	float GetNormalizedValue() const;
@@ -86,20 +86,19 @@ private:
 	UPROPERTY(
 		EditAnywhere,
 		BlueprintReadWrite,
-		Category="Resource Cmoponent",
+		Category="Resource Component",
 		meta=(AllowPrivateAccess="true", ClampMin="0", EditCondition="bAutorestore")
 	)
 	float RestoreAmount{1.f};
 	UPROPERTY(
 		EditAnywhere,
 		BlueprintReadOnly,
-		Category="Recource Component",
+		Category="Resource Component",
 		meta=(AllowPrivateAccess="true", ClampMin="0", EditCondition="bAutorestore")
 	)
 	float RestoreFrequency{1.f};
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Resource Component", meta=(AllowPrivateAccess="true"))
 	float RestoreDelayTime{1.f};
-	FTimerDelegate RestoreDelayDelegate{};
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Resource Component", meta=(AllowPrivateAccess="true"))
 	FTimerHandle RestoreTimerHandle{};
 	UFUNCTION()

@@ -19,7 +19,7 @@ void UBaseResourceComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	RestoreDelayDelegate.BindUFunction(this, FName("IncreaseValue"), RestoreAmount);
+	RestoreDelayTime = 1 / RestoreFrequency;
 	// ...
 }
 
@@ -54,6 +54,34 @@ void UBaseResourceComponent::DecreaseValue(const float Amount)
 {
 	CurrentValue -= Amount;
 	CurrentValue = FMath::Max(CurrentValue, 0.f);
+
+	if (!bAutorestore)
+	{
+		return;
+	}
+
+	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+
+	if (TimerManager.IsTimerActive(RestoreStartDelayHandle))
+	{
+		StopAutoRestore();
+	}
+	
+	if (RestoreStartDelay > 0.f)
+	{
+		if (TimerManager.IsTimerActive(RestoreStartDelayHandle))
+		{
+			StopDelayTimer();
+		}
+		
+		StartDelayTimer();
+		return;
+	}
+
+	if (!TimerManager.IsTimerActive(RestoreTimerHandle))
+	{
+		StartAutoRestore();
+	}
 }
 
 void UBaseResourceComponent::IncreaseMaxValue(const float Amount, const bool bClampCurrentValue)
@@ -144,7 +172,7 @@ void UBaseResourceComponent::StartDelayTimer()
 	{
 		return;
 	}
-	
+
 	TimerManager.SetTimer(
 						  RestoreStartDelayHandle,
 						  this,
