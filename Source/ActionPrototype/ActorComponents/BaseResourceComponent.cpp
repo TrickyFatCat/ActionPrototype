@@ -3,6 +3,8 @@
 
 #include "BaseResourceComponent.h"
 
+
+
 // Sets default values for this component's properties
 UBaseResourceComponent::UBaseResourceComponent()
 {
@@ -19,7 +21,17 @@ void UBaseResourceComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	RestoreDelayTime = 1 / RestoreFrequency;
+	ChangeDelayTime = 1 / ChangeFrequency;
+
+	if (bCustomInitialValue)
+	{
+		CurrentValue = InitialValue;
+	}
+
+	if (bAutoChange && !IsCurrentValueOutOfBounds())
+	{
+		StartAutoChange();
+	}
 	// ...
 }
 
@@ -48,6 +60,11 @@ void UBaseResourceComponent::IncreaseValue(const float Amount, const bool bClamp
 	{
 		CurrentValue = FMath::Min(CurrentValue, MaxValue);
 	}
+
+	if (bAutoChange && bIsDecreasing)
+	{
+		ProcessAutoChange();
+	}
 }
 
 void UBaseResourceComponent::DecreaseValue(const float Amount)
@@ -55,32 +72,9 @@ void UBaseResourceComponent::DecreaseValue(const float Amount)
 	CurrentValue -= Amount;
 	CurrentValue = FMath::Max(CurrentValue, 0.f);
 
-	if (!bAutorestore)
+	if (bAutoChange && !bIsDecreasing)
 	{
-		return;
-	}
-
-	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
-
-	if (TimerManager.IsTimerActive(RestoreStartDelayHandle))
-	{
-		StopAutoRestore();
-	}
-	
-	if (RestoreStartDelay > 0.f)
-	{
-		if (TimerManager.IsTimerActive(RestoreStartDelayHandle))
-		{
-			StopDelayTimer();
-		}
-		
-		StartDelayTimer();
-		return;
-	}
-
-	if (!TimerManager.IsTimerActive(RestoreTimerHandle))
-	{
-		StartAutoRestore();
+		ProcessAutoChange();
 	}
 }
 
@@ -110,6 +104,11 @@ float UBaseResourceComponent::GetNormalizedValue() const
 	return MaxValue > 0.f ? CurrentValue / MaxValue : 0.f;
 }
 
+float UBaseResourceComponent::GetThresholdValue() const
+{
+	return bIsDecreasing ? MaxValue * ChangeMinThreshold : MaxValue * ChangeMaxThreshold;
+}
+
 float UBaseResourceComponent::SetRestoreFrequency(float NewRestoreFrequency)
 {
 	if (NewRestoreFrequency <= 0.f)
@@ -125,42 +124,48 @@ float UBaseResourceComponent::SetRestoreFrequency(float NewRestoreFrequency)
 		NewRestoreFrequency = 1.f;
 	}
 
-	RestoreFrequency = NewRestoreFrequency;
-	RestoreDelayTime = 1.f / RestoreFrequency;
-	return RestoreDelayTime;
+	ChangeFrequency = NewRestoreFrequency;
+	ChangeDelayTime = 1.f / ChangeFrequency;
+	return ChangeDelayTime;
 }
 
-void UBaseResourceComponent::StartAutoRestore()
+void UBaseResourceComponent::StartAutoChange()
 {
 	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
 
-	if (RestoreDelayTime <= 0.f || TimerManager.IsTimerActive(RestoreTimerHandle))
+	if (ChangeDelayTime <= 0.f || TimerManager.IsTimerActive(ChangeTimerHandle))
 	{
 		return;
 	}
 
-	TimerManager.SetTimer(RestoreTimerHandle, this, &UBaseResourceComponent::RestoreResource, RestoreDelayTime, true);
+	TimerManager.SetTimer(ChangeTimerHandle, this, &UBaseResourceComponent::ChangeCurrentValue, ChangeDelayTime, true);
 }
 
-void UBaseResourceComponent::StopAutoRestore()
+void UBaseResourceComponent::StopAutoChange()
 {
 	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
 
-	if (TimerManager.IsTimerActive(RestoreTimerHandle))
+	if (TimerManager.IsTimerActive(ChangeTimerHandle))
 	{
-		TimerManager.ClearTimer(RestoreTimerHandle);
+		TimerManager.ClearTimer(ChangeTimerHandle);
 	}
 }
 
-void UBaseResourceComponent::RestoreResource()
+void UBaseResourceComponent::ChangeCurrentValue()
 {
-	IncreaseValue(RestoreAmount);
-	const float TargetValue = MaxValue * RestoreMaxThreshold;
-
-	if (CurrentValue >= TargetValue)
+	if (bIsDecreasing)
 	{
-		CurrentValue = TargetValue;
-		StopAutoRestore();
+		DecreaseValue(ChangeAmount);
+	}
+	else
+	{
+		IncreaseValue(ChangeAmount);
+	}
+
+	if (IsCurrentValueOutOfBounds())
+	{
+		CurrentValue = GetThresholdValue();
+		StopAutoChange();
 	}
 }
 
@@ -168,16 +173,16 @@ void UBaseResourceComponent::StartDelayTimer()
 {
 	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
 
-	if (RestoreStartDelay <= 0.f || TimerManager.IsTimerActive(RestoreStartDelayHandle))
+	if (ChangeStartDelay <= 0.f || TimerManager.IsTimerActive(ChangeStartDelayHandle))
 	{
 		return;
 	}
 
 	TimerManager.SetTimer(
-						  RestoreStartDelayHandle,
+						  ChangeStartDelayHandle,
 						  this,
-						  &UBaseResourceComponent::StartAutoRestore,
-						  RestoreStartDelay,
+						  &UBaseResourceComponent::StartAutoChange,
+						  ChangeStartDelay,
 						  false
 						 );
 }
@@ -186,8 +191,40 @@ void UBaseResourceComponent::StopDelayTimer()
 {
 	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
 
-	if (TimerManager.IsTimerActive(RestoreStartDelayHandle))
+	if (TimerManager.IsTimerActive(ChangeStartDelayHandle))
 	{
-		TimerManager.ClearTimer(RestoreStartDelayHandle);
+		TimerManager.ClearTimer(ChangeStartDelayHandle);
+	}
+}
+
+bool UBaseResourceComponent::IsCurrentValueOutOfBounds() const
+{
+	const float TargetValue = GetThresholdValue();
+	return bIsDecreasing ? CurrentValue <= TargetValue : CurrentValue >= TargetValue;
+}
+
+void UBaseResourceComponent::ProcessAutoChange()
+{
+	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+
+	if (TimerManager.IsTimerActive(ChangeStartDelayHandle))
+	{
+		StopAutoChange();
+	}
+	
+	if (ChangeStartDelay > 0.f)
+	{
+		if (TimerManager.IsTimerActive(ChangeStartDelayHandle))
+		{
+			StopDelayTimer();
+		}
+		
+		StartDelayTimer();
+		return;
+	}
+
+	if (!TimerManager.IsTimerActive(ChangeTimerHandle))
+	{
+		StartAutoChange();
 	}
 }
