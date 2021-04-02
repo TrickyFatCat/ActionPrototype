@@ -70,39 +70,39 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Resource Component", meta=(AllowPrivateAccess="true"))
 	bool bAutoChange{false};
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Resource Component", meta=(AllowPrivateAccess="true"))
-	bool bIsDecreasing{false};	
+	bool bIsDecreasing{false};
 
 	UPROPERTY(
 		EditAnywhere,
 		BlueprintReadWrite,
 		Category="Resource Component",
-		meta=(AllowPrivateAccess="true", ClampMin="0", ClampMax="1", EditCondition="bAutorestore")
+		meta=(AllowPrivateAccess="true", ClampMin="0", ClampMax="1", EditCondition="bAutoChange && bIsDecreasing")
 	)
 	float ChangeMinThreshold{0.f};
 	UPROPERTY(
 		EditAnywhere,
 		BlueprintReadWrite,
 		Category="Resource Component",
-		meta=(AllowPrivateAccess="true", ClampMin="0", ClampMax="1", EditCondition="bAutorestore")
+		meta=(AllowPrivateAccess="true", ClampMin="0", ClampMax="1", EditCondition="bAutoChange && !bIsDecreasing")
 	)
 	float ChangeMaxThreshold{MaxValue};
 	UPROPERTY(
 		EditAnywhere,
 		BlueprintReadWrite,
 		Category="Resource Component",
-		meta=(AllowPrivateAccess="true", ClampMin="0", EditCondition="bAutorestore")
+		meta=(AllowPrivateAccess="true", ClampMin="0", EditCondition="bAutoChange")
 	)
 	float ChangeAmount{1.f};
 	UPROPERTY(
 		EditAnywhere,
 		BlueprintReadOnly,
 		Category="Resource Component",
-		meta=(AllowPrivateAccess="true", ClampMin="0", EditCondition="bAutorestore")
+		meta=(AllowPrivateAccess="true", ClampMin="0", EditCondition="bAutoChange")
 	)
 	float ChangeFrequency{1.f};
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Resource Component", meta=(AllowPrivateAccess="true"))
+	UPROPERTY(BlueprintReadOnly, Category="Resource Component", meta=(AllowPrivateAccess="true"))
 	float ChangeDelayTime{1.f};
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Resource Component", meta=(AllowPrivateAccess="true"))
+	UPROPERTY(BlueprintReadOnly, Category="Resource Component", meta=(AllowPrivateAccess="true"))
 	FTimerHandle ChangeTimerHandle{};
 	UFUNCTION()
 	void StartAutoChange();
@@ -111,15 +111,20 @@ private:
 	UFUNCTION()
 	void ChangeCurrentValue();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Resource Component", meta=(AllowPrivateAccess="true"))
+	UPROPERTY(
+		EditAnywhere,
+		BlueprintReadWrite,
+		Category="Resource Component",
+		meta=(AllowPrivateAccess="true", ClampMin="0", EditCondition="bAutoChange")
+	)
 	float ChangeStartDelay{1.f};
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Resource Component", meta=(AllowPrivateAccess="true"))
+	UPROPERTY(BlueprintReadOnly, Category="Resource Component", meta=(AllowPrivateAccess="true"))
 	FTimerHandle ChangeStartDelayHandle{};
 	UFUNCTION()
 	void StartDelayTimer();
 	UFUNCTION()
 	void StopDelayTimer();
-	
+
 	UFUNCTION()
 	bool IsCurrentValueOutOfBounds() const;
 	UFUNCTION()
