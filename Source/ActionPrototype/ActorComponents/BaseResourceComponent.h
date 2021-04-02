@@ -6,6 +6,14 @@
 #include "Components/ActorComponent.h"
 #include "BaseResourceComponent.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnValueIncreased, float, Amount, float, NewValue);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnValueDecreased, float, Amount, float, NewValue);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnMaxValueIncreased, float, Amount, float, NewValue);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnMaxValueDecreased, float, Amount, float, NewValue);
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class ACTIONPROTOTYPE_API UBaseResourceComponent : public UActorComponent
 {
@@ -43,6 +51,15 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Resource Component")
 	float SetRestoreFrequency(float NewRestoreFrequency);
+
+	UPROPERTY(BlueprintAssignable, Category="Resource Component|Delegates")
+	FOnValueIncreased OnCurrentValueIncreased;
+	UPROPERTY(BlueprintAssignable, Category="Resource Component|Delegates")
+	FOnValueDecreased OnCurrentValueDecreased;
+	UPROPERTY(BlueprintAssignable, Category="Resource Component|Delegates")
+	FOnMaxValueIncreased OnMaxValueIncreased;
+	UPROPERTY(BlueprintAssignable, Category="Resource Component|Delegates")
+	FOnMaxValueDecreased OnMaxValueDecreased;
 
 protected:
 

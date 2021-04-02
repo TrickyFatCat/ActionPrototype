@@ -61,6 +61,8 @@ void UBaseResourceComponent::IncreaseValue(const float Amount, const bool bClamp
 		CurrentValue = FMath::Min(CurrentValue, MaxValue);
 	}
 
+	OnCurrentValueIncreased.Broadcast(Amount, CurrentValue);
+
 	if (bAutoChange && bIsDecreasing)
 	{
 		ProcessAutoChange();
@@ -71,8 +73,9 @@ void UBaseResourceComponent::DecreaseValue(const float Amount)
 {
 	CurrentValue -= Amount;
 	CurrentValue = FMath::Max(CurrentValue, 0.f);
+	OnCurrentValueDecreased.Broadcast(Amount, CurrentValue);
 
-	if (bAutoChange && !bIsDecreasing)
+	if (bAutoChange && !bIsDecreasing && CurrentValue > 0.f)
 	{
 		ProcessAutoChange();
 	}
@@ -81,6 +84,7 @@ void UBaseResourceComponent::DecreaseValue(const float Amount)
 void UBaseResourceComponent::IncreaseMaxValue(const float Amount, const bool bClampCurrentValue)
 {
 	MaxValue += Amount;
+	OnMaxValueIncreased.Broadcast(Amount, MaxValue);
 
 	if (bClampCurrentValue)
 	{
@@ -92,6 +96,7 @@ void UBaseResourceComponent::DecreaseMaxValue(const float Amount, const bool bCl
 {
 	MaxValue -= Amount;
 	MaxValue = FMath::Max(MaxValue, 0.f);
+	OnMaxValueDecreased.Broadcast(Amount, MaxValue);
 
 	if (bClampCurrentValue && CurrentValue > MaxValue)
 	{
@@ -164,7 +169,6 @@ void UBaseResourceComponent::ChangeCurrentValue()
 
 	if (IsCurrentValueOutOfBounds())
 	{
-		CurrentValue = GetThresholdValue();
 		StopAutoChange();
 	}
 }
