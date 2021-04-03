@@ -104,7 +104,7 @@ private:
 		Category="Resource Component",
 		meta=(AllowPrivateAccess="true", ClampMin="0", ClampMax="1", EditCondition="bAutoChange && !bIsDecreasing")
 	)
-	float ChangeMaxThreshold{MaxValue};
+	float ChangeMaxThreshold{1.f};
 	UPROPERTY(
 		EditAnywhere,
 		BlueprintReadWrite,
