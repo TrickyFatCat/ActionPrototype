@@ -34,6 +34,8 @@ public:
 		ELevelTick TickType,
 		FActorComponentTickFunction* ThisTickFunction) override;
 
+	float GetCurrentValue() const;
+	float GetMaxValue() const;
 	UFUNCTION(BlueprintCallable, Category="Resource Component")
 	void SetMaxValue(const float NewMaxValue);
 	UFUNCTION(BlueprintCallable, Category="Resource Component")

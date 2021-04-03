@@ -47,6 +47,16 @@ void UBaseResourceComponent::TickComponent(
 	// ...
 }
 
+float UBaseResourceComponent::GetCurrentValue() const
+{
+	return CurrentValue;
+}
+
+float UBaseResourceComponent::GetMaxValue() const
+{
+	return MaxValue;
+}
+
 void UBaseResourceComponent::SetMaxValue(const float NewMaxValue)
 {
 	MaxValue = NewMaxValue;
