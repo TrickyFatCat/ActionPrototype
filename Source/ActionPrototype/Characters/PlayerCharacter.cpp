@@ -5,10 +5,14 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "ActionPrototype/ActorComponents/BaseResourceComponent.h"
 
 APlayerCharacter::APlayerCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	// Create and adjust Stamina component
+	StaminaComponent = CreateDefaultSubobject<UBaseResourceComponent>(TEXT("Stamina Component"));
 
 	// Create and adjust Spring Arm
 	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("Spring Arm"));
@@ -43,6 +47,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 void APlayerCharacter::BeginPlay()
 {
+	StaminaComponent->OnCurrentValueIncreased.AddDynamic(this, &APlayerCharacter::BroadcastStaminaIncreased);
+	StaminaComponent->OnCurrentValueDecreased.AddDynamic(this, &APlayerCharacter::BroadcastStaminaDecreased);
 	Super::BeginPlay();
 }
 
@@ -79,6 +85,41 @@ bool APlayerCharacter::SetCameraPitchSensitivity(const float NewSensitivity)
 	return true;
 }
 
+float APlayerCharacter::GetCurrentStamina() const
+{
+	return StaminaComponent->GetCurrentValue();
+}
+
+float APlayerCharacter::GetMaxStamina() const
+{
+	return StaminaComponent->GetMaxValue();
+}
+
+float APlayerCharacter::GetNormalisedStamina() const
+{
+	return StaminaComponent->GetNormalizedValue();
+}
+
+void APlayerCharacter::DecreaseStamina(const float Amount)
+{
+	StaminaComponent->DecreaseValue(Amount);
+}
+
+void APlayerCharacter::IncreaseStamina(const float Amount)
+{
+	StaminaComponent->IncreaseValue(Amount);
+}
+
+void APlayerCharacter::IncreaseMaxStamina(const float Amount)
+{
+	StaminaComponent->IncreaseMaxValue(Amount);
+}
+
+void APlayerCharacter::DecreaseMaxStamina(const float Amount)
+{
+	StaminaComponent->DecreaseMaxValue(Amount);
+}
+
 void APlayerCharacter::MoveForward(float AxisValue)
 {
 	if (Controller != nullptr && AxisValue != 0)
@@ -109,4 +150,14 @@ void APlayerCharacter::LookRight(float AxisValue)
 void APlayerCharacter::LookUp(float AxisValue)
 {
 	AddControllerPitchInput(AxisValue * CameraPitchSensitivity * GetWorld()->GetDeltaSeconds());
+}
+
+void APlayerCharacter::BroadcastStaminaIncreased(const float Amount, const float NewValue)
+{
+	OnStaminaIncreased.Broadcast(Amount, NewValue);
+}
+
+void APlayerCharacter::BroadcastStaminaDecreased(const float Amount, const float NewValue)
+{
+	OnStaminaDecreased.Broadcast(Amount, NewValue);
 }
