@@ -64,6 +64,11 @@ void UBaseResourceComponent::SetMaxValue(const float NewMaxValue)
 
 void UBaseResourceComponent::IncreaseValue(const float Amount, const bool bClampToMax)
 {
+	if (bClampToMax && CurrentValue >= MaxValue)
+	{
+		return;
+	}
+	
 	CurrentValue += Amount;
 
 	if (bClampToMax)
@@ -81,6 +86,11 @@ void UBaseResourceComponent::IncreaseValue(const float Amount, const bool bClamp
 
 void UBaseResourceComponent::DecreaseValue(const float Amount)
 {
+	if (CurrentValue <= 0.f)
+	{
+		return;
+	}
+	
 	CurrentValue -= Amount;
 	CurrentValue = FMath::Max(CurrentValue, 0.f);
 	OnCurrentValueDecreased.Broadcast(Amount, CurrentValue);
