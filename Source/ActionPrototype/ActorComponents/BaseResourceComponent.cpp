@@ -57,11 +57,6 @@ float UBaseResourceComponent::GetMaxValue() const
 	return MaxValue;
 }
 
-void UBaseResourceComponent::SetMaxValue(const float NewMaxValue)
-{
-	MaxValue = NewMaxValue;
-}
-
 void UBaseResourceComponent::IncreaseValue(const float Amount, const bool bClampToMax)
 {
 	if (bClampToMax && CurrentValue >= MaxValue)

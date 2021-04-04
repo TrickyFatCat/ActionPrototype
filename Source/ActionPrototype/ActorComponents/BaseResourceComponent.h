@@ -37,8 +37,6 @@ public:
 	float GetCurrentValue() const;
 	float GetMaxValue() const;
 	UFUNCTION(BlueprintCallable, Category="Resource Component")
-	void SetMaxValue(const float NewMaxValue);
-	UFUNCTION(BlueprintCallable, Category="Resource Component")
 	void IncreaseValue(const float Amount, const bool bClampToMax = true);
 	UFUNCTION(BlueprintCallable, Category="Resource Component")
 	void DecreaseValue(const float Amount);
