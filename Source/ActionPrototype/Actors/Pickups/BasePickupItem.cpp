@@ -42,7 +42,7 @@ void ABasePickupItem::BeginPlay()
 		PickupAnimationTimeline->SetPlayRate(AnimationSpeed);
 		PickupAnimationTimeline->Play();
 	}
-	
+
 	Super::BeginPlay();
 }
 
@@ -98,8 +98,8 @@ void ABasePickupItem::TriggerOverlapBegin_Implementation(
 	{
 		UGameplayStatics::PlaySoundAtLocation(this, PickupSound, MeshInitialLocation);
 	}
-	
-	OnPickup();
+
+	OnPickup(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 	Destroy();
 }
 

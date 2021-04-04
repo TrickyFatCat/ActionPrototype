@@ -45,25 +45,31 @@ public:
 
 protected:
 	UFUNCTION(BlueprintImplementableEvent, Category="Pickup Item")
-	void OnPickup();
+	void OnPickup(
+		UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex,
+		bool bFromSweep,
+		const FHitResult& SweepResult);
 	virtual void ProcessPickupEffect();
-	
+
 	UFUNCTION(BlueprintNativeEvent)
-    void TriggerOverlapBegin(
-            UPrimitiveComponent* OverlappedComponent,
-            AActor* OtherActor,
-            UPrimitiveComponent* OtherComp,
-            int32 OtherBodyIndex,
-            bool bFromSweep,
-            const FHitResult& SweepResult
-        );
+	void TriggerOverlapBegin(
+			UPrimitiveComponent* OverlappedComponent,
+			AActor* OtherActor,
+			UPrimitiveComponent* OtherComp,
+			int32 OtherBodyIndex,
+			bool bFromSweep,
+			const FHitResult& SweepResult
+		);
 	UFUNCTION(BlueprintNativeEvent)
-    void TriggerOverlapEnd(
-            UPrimitiveComponent* OverlappedComponent,
-            AActor* OtherActor,
-            UPrimitiveComponent* OtherComp,
-            int32 OtherBodyIndex
-        );
+	void TriggerOverlapEnd(
+			UPrimitiveComponent* OverlappedComponent,
+			AActor* OtherActor,
+			UPrimitiveComponent* OtherComp,
+			int32 OtherBodyIndex
+		);
 
 private:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
@@ -77,10 +83,10 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Pickup|Animation", meta=(AllowPrivateAccess="true"))
 	float AnimationSpeed{1.f};
-	
+
 	UPROPERTY(BlueprintReadOnly, Category="Pickup|Mesh", meta=(AllowPrivateAccess="true"))
 	FVector MeshInitialLocation{FVector::ZeroVector};
-	
+
 	void AnimateMeshLocation(const float AnimationProgress) const;
 	void AnimateMeshRotation() const;
 	UFUNCTION()
