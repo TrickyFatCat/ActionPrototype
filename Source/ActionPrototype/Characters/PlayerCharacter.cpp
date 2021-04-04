@@ -47,9 +47,11 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 void APlayerCharacter::BeginPlay()
 {
+	Super::BeginPlay();
+	Coins = 0;
 	StaminaComponent->OnCurrentValueIncreased.AddDynamic(this, &APlayerCharacter::BroadcastStaminaIncreased);
 	StaminaComponent->OnCurrentValueDecreased.AddDynamic(this, &APlayerCharacter::BroadcastStaminaDecreased);
-	Super::BeginPlay();
+	OnPlayerSpawned.Broadcast();
 }
 
 void APlayerCharacter::Tick(float DeltaTime)

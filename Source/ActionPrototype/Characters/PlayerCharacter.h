@@ -18,6 +18,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnCoinsIncreased, int32, Amount, i
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnCoinsDecreased, int32, Amount, int32, NewValue);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerSpawned);
+
 /**
  * 
  */
@@ -72,6 +74,8 @@ public:
 	FOnCoinsIncreased OnCoinsIncreased;
 	UPROPERTY(BlueprintAssignable, Category="Player|Coins")
 	FOnCoinsDecreased OnCoinsDecreased;
+	UPROPERTY(BlueprintAssignable, Category="Player|Spawn")
+	FOnPlayerSpawned OnPlayerSpawned;
 protected:
 	virtual void BeginPlay() override;
 
