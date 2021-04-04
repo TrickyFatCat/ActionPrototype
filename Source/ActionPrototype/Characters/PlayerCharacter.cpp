@@ -120,6 +120,29 @@ void APlayerCharacter::DecreaseMaxStamina(const float Amount)
 	StaminaComponent->DecreaseMaxValue(Amount);
 }
 
+void APlayerCharacter::IncreaseCoins(const int32 Amount)
+{
+	Coins += Amount;
+	OnCoinsIncreased.Broadcast(Amount, Coins);
+}
+
+void APlayerCharacter::DecreaseCoins(const int32 Amount)
+{
+	if (Coins == 0)
+	{
+		return;
+	}
+
+	Coins -= Amount;
+	Coins = FMath::Max(Coins, 0);
+	OnCoinsDecreased.Broadcast(Amount, Coins);
+}
+
+int32 APlayerCharacter::GetCoins() const
+{
+	return Coins;
+}
+
 void APlayerCharacter::MoveForward(float AxisValue)
 {
 	if (Controller != nullptr && AxisValue != 0)

@@ -14,6 +14,10 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnStaminaIncreased, float, Amount,
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnStaminaDecreased, float, Amount, float, NewValue);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnCoinsIncreased, float, Amount, float, NewValue);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnCoinsDecreased, float, Amount, float, NewValue);
+
 /**
  * 
  */
@@ -53,10 +57,21 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Player|Stamina")
 	void DecreaseMaxStamina(const float Amount);
 
+	UFUNCTION(BlueprintCallable, Category="Player|Coins")
+	void IncreaseCoins(const int32 Amount);
+	UFUNCTION(BlueprintCallable, Category="Player|Coins")
+	void DecreaseCoins(const int32 Amount);
+	UFUNCTION(BlueprintPure, Category="Player|Coins")
+	int32 GetCoins() const;
+
 	UPROPERTY(BlueprintAssignable, Category="Player|Stamina")
 	FOnStaminaIncreased OnStaminaIncreased;
 	UPROPERTY(BlueprintAssignable, Category="Player|Stamina")
 	FOnStaminaDecreased OnStaminaDecreased;
+	UPROPERTY(BlueprintAssignable, Category="Player|Coins")
+	FOnCoinsIncreased OnCoinsIncreased;
+	UPROPERTY(BlueprintAssignable, Category="Player|Coins")
+	FOnCoinsDecreased OnCoinsDecreased;
 protected:
 	virtual void BeginPlay() override;
 
@@ -92,4 +107,7 @@ private:
 	void BroadcastStaminaIncreased(const float Amount, const float NewValue);
 	UFUNCTION()
 	void BroadcastStaminaDecreased(const float Amount, const float NewValue);
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Player|Coins", meta=(AllowPrivateAccess="true"))
+	int32 Coins{0};
 };
