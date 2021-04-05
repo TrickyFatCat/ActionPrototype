@@ -4,7 +4,6 @@
 #include "BaseResourceComponent.h"
 
 
-
 // Sets default values for this component's properties
 UBaseResourceComponent::UBaseResourceComponent()
 {
@@ -19,8 +18,6 @@ UBaseResourceComponent::UBaseResourceComponent()
 // Called when the game starts
 void UBaseResourceComponent::BeginPlay()
 {
-	Super::BeginPlay();
-
 	ChangeDelayTime = 1 / ChangeFrequency;
 
 	if (bCustomInitialValue)
@@ -32,7 +29,8 @@ void UBaseResourceComponent::BeginPlay()
 	{
 		StartAutoChange();
 	}
-	// ...
+	
+	Super::BeginPlay();
 }
 
 
@@ -63,7 +61,7 @@ void UBaseResourceComponent::IncreaseValue(const float Amount, const bool bClamp
 	{
 		return;
 	}
-	
+
 	CurrentValue += Amount;
 
 	if (bClampToMax)
@@ -85,7 +83,7 @@ void UBaseResourceComponent::DecreaseValue(const float Amount)
 	{
 		return;
 	}
-	
+
 	CurrentValue -= Amount;
 	CurrentValue = FMath::Max(CurrentValue, 0.f);
 	OnCurrentValueDecreased.Broadcast(Amount, CurrentValue);
@@ -230,14 +228,14 @@ void UBaseResourceComponent::ProcessAutoChange()
 	{
 		StopAutoChange();
 	}
-	
+
 	if (ChangeStartDelay > 0.f)
 	{
 		if (TimerManager.IsTimerActive(ChangeStartDelayHandle))
 		{
 			StopDelayTimer();
 		}
-		
+
 		StartDelayTimer();
 		return;
 	}

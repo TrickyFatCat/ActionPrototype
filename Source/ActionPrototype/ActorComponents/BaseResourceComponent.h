@@ -36,28 +36,47 @@ public:
 
 	float GetCurrentValue() const;
 	float GetMaxValue() const;
+	/** Increases CurrentValue on a given number.
+	 *  @param Amount - delta value;
+	 *  @param bClampToMax - determines if CurrentValue must be limited to MaxValue;
+	 */
 	UFUNCTION(BlueprintCallable, Category="Resource Component")
 	void IncreaseValue(const float Amount, const bool bClampToMax = true);
+	/** Decreases CurrentValue on a given number. */
 	UFUNCTION(BlueprintCallable, Category="Resource Component")
 	void DecreaseValue(const float Amount);
+	/** Increases MaxValue on a given number.
+	 *  @param Amount - delta value;
+	 *  @param bClampCurrentValue — determines if CurrentValue must be changed with MaxValue;
+	 */
 	UFUNCTION(BlueprintCallable, Category="Resource Component")
 	void IncreaseMaxValue(const float Amount, const bool bClampCurrentValue = true);
+	/** Decreases MaxValue on a given number
+	 * @param Amount - delta value;
+	 * @param bClampCurrentValue - determines if CurrentValue must be changed with MaxValue;
+	 */
 	UFUNCTION(BlueprintCallable, Category="Resource Component")
 	void DecreaseMaxValue(const float Amount, const bool bClampCurrentValue = true);
+	/** Returns normalized value of a resource. */
 	UFUNCTION(BlueprintPure, Category="Resource Component")
 	float GetNormalizedValue() const;
+	/** Return threshold value. */
 	UFUNCTION(BlueprintPure, Category="Resource Component")
 	float GetThresholdValue() const;
-
+	/** Sets RestoreFrequency and calculates ChangeDelayTime. */
 	UFUNCTION(BlueprintCallable, Category="Resource Component")
 	float SetRestoreFrequency(float NewRestoreFrequency);
 
+	/** Calls when CurrentValue increased. */
 	UPROPERTY(BlueprintAssignable, Category="Resource Component|Delegates")
 	FOnValueIncreased OnCurrentValueIncreased;
+	/** Calls when CurrentValue decreased. */
 	UPROPERTY(BlueprintAssignable, Category="Resource Component|Delegates")
 	FOnValueDecreased OnCurrentValueDecreased;
+	/** Calls when MaxValue increased. */
 	UPROPERTY(BlueprintAssignable, Category="Resource Component|Delegates")
 	FOnMaxValueIncreased OnMaxValueIncreased;
+	/** Calls when MaxValue decreased. */
 	UPROPERTY(BlueprintAssignable, Category="Resource Component|Delegates")
 	FOnMaxValueDecreased OnMaxValueDecreased;
 
@@ -74,8 +93,10 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Resource Component", meta=(AllowPrivateAccess="true"))
 	float CurrentValue{MaxValue};
 
+	/** Determines if the resource should begin play with a custom current value. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Resource Component", meta=(AllowPrivateAccess="true"))
 	bool bCustomInitialValue{false};
+	/** Custom CurrentValue on begin play. */
 	UPROPERTY(
 		EditAnywhere,
 		BlueprintReadWrite,
@@ -84,17 +105,27 @@ private:
 	)
 	float InitialValue{MaxValue};
 
+	/** Determines if a resource should change itself automatically. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Resource Component", meta=(AllowPrivateAccess="true"))
 	bool bAutoChange{false};
+	/** Determines if a resource should decreasing while changing automatically. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Resource Component", meta=(AllowPrivateAccess="true"))
 	bool bIsDecreasing{false};
 
+	/** Determines a minimal relative value of CurrentValue for autochange.
+	 * If CurrentValue reaches this relative value, auto change will stop.
+	 * This value used only if bIsDecreasing == true.
+	 */
 	UPROPERTY(
 		EditAnywhere,
 		BlueprintReadWrite,
 		Category="Resource Component",
 		meta=(AllowPrivateAccess="true", ClampMin="0", ClampMax="1", EditCondition="bAutoChange && bIsDecreasing")
 	)
+	/** Determines a maximum relative value of CurrentValue for autochange.
+	 * If CurrentValue reaches this relative value, auto change will stop.
+	 * This value is used if bIsDecreasing == false.
+	 */
 	float ChangeMinThreshold{0.f};
 	UPROPERTY(
 		EditAnywhere,
@@ -103,6 +134,7 @@ private:
 		meta=(AllowPrivateAccess="true", ClampMin="0", ClampMax="1", EditCondition="bAutoChange && !bIsDecreasing")
 	)
 	float ChangeMaxThreshold{1.f};
+	/** Determines how many resource will be restore every tick during autochange. */
 	UPROPERTY(
 		EditAnywhere,
 		BlueprintReadWrite,
@@ -110,6 +142,7 @@ private:
 		meta=(AllowPrivateAccess="true", ClampMin="0", EditCondition="bAutoChange")
 	)
 	float ChangeAmount{1.f};
+	/** Determines frequency of change ticks. */
 	UPROPERTY(
 		EditAnywhere,
 		BlueprintReadOnly,
@@ -117,6 +150,7 @@ private:
 		meta=(AllowPrivateAccess="true", ClampMin="0", EditCondition="bAutoChange")
 	)
 	float ChangeFrequency{1.f};
+	/** Time between ticks, calculates automatically from ChangeFrequency. */
 	UPROPERTY(BlueprintReadOnly, Category="Resource Component", meta=(AllowPrivateAccess="true"))
 	float ChangeDelayTime{1.f};
 	UPROPERTY(BlueprintReadOnly, Category="Resource Component", meta=(AllowPrivateAccess="true"))
@@ -128,6 +162,7 @@ private:
 	UFUNCTION()
 	void ChangeCurrentValue();
 
+	/** Determines time before starting changing CurrentValue automatically. */
 	UPROPERTY(
 		EditAnywhere,
 		BlueprintReadWrite,
