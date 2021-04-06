@@ -15,7 +15,7 @@ AFloorSwitch::AFloorSwitch()
 	TriggerVolume->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	TriggerVolume->SetCollisionObjectType(ECC_WorldStatic);
 	TriggerVolume->SetCollisionResponseToChannels(ECR_Ignore);
-	TriggerVolume->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	TriggerVolume->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Overlap);
 
 	SwitchMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Switch Mesh"));
 	SwitchMesh->SetupAttachment(RootComponent);
@@ -93,7 +93,7 @@ void AFloorSwitch::EnableFloorSwitch()
 	TriggerVolume->OnComponentEndOverlap.AddDynamic(this, &AFloorSwitch::TriggerOverlapEnd);
 	TriggerVolume->SetGenerateOverlapEvents(true);
 	TriggerVolume->SetCollisionResponseToChannels(ECR_Ignore);
-	TriggerVolume->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	TriggerVolume->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Overlap);
 	SetActorTickEnabled(true);
 	CurrentState = EFloorSwitchState::Idle;
 	OnEnabled();
