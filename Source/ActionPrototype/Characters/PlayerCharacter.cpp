@@ -52,9 +52,9 @@ void APlayerCharacter::BeginPlay()
 {
 	StaminaDecreaseDeltaTime = StaminaDecreaseFrequency > 0.f ? 1.f / StaminaDecreaseFrequency : 0.f;
 	Coins = 0;
-	Super::BeginPlay();
 	StaminaComponent->OnCurrentValueIncreased.AddDynamic(this, &APlayerCharacter::BroadcastStaminaIncreased);
 	StaminaComponent->OnCurrentValueDecreased.AddDynamic(this, &APlayerCharacter::BroadcastStaminaDecreased);
+	Super::BeginPlay();
 	OnPlayerSpawned.Broadcast();
 }
 
@@ -130,6 +130,27 @@ void APlayerCharacter::IncreaseMaxStamina(const float Amount)
 void APlayerCharacter::DecreaseMaxStamina(const float Amount)
 {
 	StaminaComponent->DecreaseMaxValue(Amount);
+}
+
+EStaminaStatus APlayerCharacter::GetStaminaStatus() const
+{
+	const float CurrentStamina = GetNormalisedStamina();
+	EStaminaStatus StaminaStatus;
+
+	if (CurrentStamina > StaminaThresholds[0])
+	{
+		StaminaStatus = EStaminaStatus::High;
+	}
+	else if (CurrentStamina <= StaminaThresholds[0] && CurrentStamina > StaminaThresholds[1])
+	{
+		StaminaStatus = EStaminaStatus::Medium;
+	}
+	else
+	{
+		StaminaStatus = EStaminaStatus::Low;
+	}
+
+	return StaminaStatus;
 }
 
 void APlayerCharacter::IncreaseCoins(const int32 Amount)
@@ -215,7 +236,7 @@ void APlayerCharacter::DecreaseStaminaOnSprint()
 {
 	const FVector HorizontalVelocity = FVector(GetVelocity().X, GetVelocity().Y, 0.f);
 	const float HorizontalSpeed = HorizontalVelocity.Size();
-	
+
 	if (HorizontalSpeed <= 0.f)
 	{
 		return;

@@ -10,6 +10,14 @@ class USpringArmComponent;
 class UCameraComponent;
 class UBaseResourceComponent;
 
+UENUM(BlueprintType)
+enum class EStaminaStatus : uint8
+{
+	High,
+	Medium,
+	Low
+};
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnStaminaIncreased, float, Amount, float, NewValue);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnStaminaDecreased, float, Amount, float, NewValue);
@@ -58,6 +66,8 @@ public:
 	void IncreaseMaxStamina(const float Amount);
 	UFUNCTION(BlueprintCallable, Category="Player|Stamina")
 	void DecreaseMaxStamina(const float Amount);
+	UFUNCTION(BlueprintPure, Category="Player|Stamina")
+	EStaminaStatus GetStaminaStatus() const;
 
 	UFUNCTION(BlueprintCallable, Category="Player|Coins")
 	void IncreaseCoins(const int32 Amount);
@@ -65,7 +75,7 @@ public:
 	void DecreaseCoins(const int32 Amount);
 	UFUNCTION(BlueprintPure, Category="Player|Coins")
 	int32 GetCoins() const;
-	
+
 	UFUNCTION(BlueprintCallable, Category="Player|Sprint")
 	void SetSprintStaminaDecreaseFrequency(const float NewFrequency);
 
@@ -110,6 +120,8 @@ private:
 	void LookRight(float AxisValue);
 	void LookUp(float AxisValue);
 
+	const TArray<float> StaminaThresholds{0.5f, 0.25f};
+	
 	UFUNCTION()
 	void BroadcastStaminaIncreased(const float Amount, const float NewValue);
 	UFUNCTION()
@@ -128,6 +140,7 @@ private:
 	float StaminaDecreaseDeltaTime{1.f};
 	UPROPERTY()
 	FTimerHandle DecreaseDeltaTimeHandle{};
+
 	UFUNCTION()
 	void DecreaseStaminaOnSprint();
 	void StartDecreaseStamina();
