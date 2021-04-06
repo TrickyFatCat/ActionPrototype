@@ -65,6 +65,9 @@ public:
 	void DecreaseCoins(const int32 Amount);
 	UFUNCTION(BlueprintPure, Category="Player|Coins")
 	int32 GetCoins() const;
+	
+	UFUNCTION(BlueprintCallable, Category="Player|Sprint")
+	void SetSprintStaminaDecreaseFrequency(const float NewFrequency);
 
 	UPROPERTY(BlueprintAssignable, Category="Player|Stamina")
 	FOnStaminaIncreased OnStaminaIncreased;
@@ -114,4 +117,30 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Player|Coins", meta=(AllowPrivateAccess="true"))
 	int32 Coins{0};
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Player|Sprint", meta=(AllowPrivateAccess="true"))
+	float SprintFactor{2.f};
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Player|Sprint", meta=(AllowPrivateAccess="true"))
+	float SprintStaminaCost{1.f};
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Player|Sprint", meta=(AllowPrivateAccess="true"))
+	float StaminaDecreaseFrequency{1.f};
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Player|Sprint", meta=(AllowPrivateAccess="true"))
+	float StaminaDecreaseDeltaTime{1.f};
+	UPROPERTY()
+	FTimerHandle DecreaseDeltaTimeHandle{};
+	UFUNCTION()
+	void DecreaseStaminaOnSprint();
+	void StartDecreaseStamina();
+	void StopDecreaseStamina();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Player|Sprint", meta=(AllowPrivateAccess="true"))
+	bool bIsSprintPressed{false};
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Player|Sprint", meta=(AllowPrivateAccess="true"))
+	bool bIsSprinting{false};
+	UFUNCTION()
+	void StartSprinting();
+	UFUNCTION()
+	void StopSprinting();
+	UFUNCTION()
+	void ProcessSprintAction();
 };

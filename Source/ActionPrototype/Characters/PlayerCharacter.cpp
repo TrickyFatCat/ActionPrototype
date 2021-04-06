@@ -43,12 +43,16 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAxis("MoveRight", this, &APlayerCharacter::MoveRight);
 	PlayerInputComponent->BindAxis("LookRight", this, &APlayerCharacter::AddControllerYawInput);
 	PlayerInputComponent->BindAxis("LookUp", this, &APlayerCharacter::AddControllerPitchInput);
+
+	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &APlayerCharacter::ProcessSprintAction);
+	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &APlayerCharacter::ProcessSprintAction);
 }
 
 void APlayerCharacter::BeginPlay()
 {
-	Super::BeginPlay();
+	StaminaDecreaseDeltaTime = StaminaDecreaseFrequency > 0.f ? 1.f / StaminaDecreaseFrequency : 0.f;
 	Coins = 0;
+	Super::BeginPlay();
 	StaminaComponent->OnCurrentValueIncreased.AddDynamic(this, &APlayerCharacter::BroadcastStaminaIncreased);
 	StaminaComponent->OnCurrentValueDecreased.AddDynamic(this, &APlayerCharacter::BroadcastStaminaDecreased);
 	OnPlayerSpawned.Broadcast();
@@ -63,8 +67,11 @@ bool APlayerCharacter::SetCameraYawSensitivity(const float NewSensitivity)
 {
 	if (NewSensitivity <= 0.f)
 	{
-		UE_LOG(LogInput, Error,
-		       TEXT("Camera Yaw sensitivity can't be set less or equal 0. Sensitivity wasn't changed."));
+		UE_LOG(
+			   LogInput,
+			   Error,
+			   TEXT("Camera Yaw sensitivity can't be set less or equal 0. Sensitivity wasn't changed.")
+			  );
 		return false;
 	}
 
@@ -77,8 +84,11 @@ bool APlayerCharacter::SetCameraPitchSensitivity(const float NewSensitivity)
 {
 	if (NewSensitivity <= 0.f)
 	{
-		UE_LOG(LogInput, Error,
-		       TEXT("Camera Pitch sensitivity can't be set less or equal 0. Sensitivity wasn't changed."));
+		UE_LOG(
+			   LogInput,
+			   Error,
+			   TEXT("Camera Pitch sensitivity can't be set less or equal 0. Sensitivity wasn't changed.")
+			  );
 		return false;
 	}
 
@@ -145,6 +155,20 @@ int32 APlayerCharacter::GetCoins() const
 	return Coins;
 }
 
+void APlayerCharacter::SetSprintStaminaDecreaseFrequency(const float NewFrequency)
+{
+	if (NewFrequency <= 0.f)
+	{
+		StaminaDecreaseFrequency = 0.f;
+		StaminaDecreaseDeltaTime = 0.f;
+	}
+	else
+	{
+		StaminaDecreaseFrequency = NewFrequency;
+		StaminaDecreaseDeltaTime = 1.f / StaminaDecreaseFrequency;
+	}
+}
+
 void APlayerCharacter::MoveForward(float AxisValue)
 {
 	if (Controller != nullptr && AxisValue != 0)
@@ -185,4 +209,84 @@ void APlayerCharacter::BroadcastStaminaIncreased(const float Amount, const float
 void APlayerCharacter::BroadcastStaminaDecreased(const float Amount, const float NewValue)
 {
 	OnStaminaDecreased.Broadcast(Amount, NewValue);
+}
+
+void APlayerCharacter::DecreaseStaminaOnSprint()
+{
+	const FVector HorizontalVelocity = FVector(GetVelocity().X, GetVelocity().Y, 0.f);
+	const float HorizontalSpeed = HorizontalVelocity.Size();
+	
+	if (HorizontalSpeed <= 0.f)
+	{
+		return;
+	}
+
+	DecreaseStamina(SprintStaminaCost);
+
+	if (GetCurrentStamina() <= 0.f)
+	{
+		StopSprinting();
+	}
+}
+
+void APlayerCharacter::StartDecreaseStamina()
+{
+	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+
+	if (!TimerManager.IsTimerActive(DecreaseDeltaTimeHandle))
+	{
+		TimerManager.SetTimer(
+							  DecreaseDeltaTimeHandle,
+							  this,
+							  &APlayerCharacter::DecreaseStaminaOnSprint,
+							  StaminaDecreaseDeltaTime,
+							  true
+							 );
+	}
+}
+
+void APlayerCharacter::StopDecreaseStamina()
+{
+	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+
+	if (TimerManager.IsTimerActive(DecreaseDeltaTimeHandle))
+	{
+		TimerManager.ClearTimer(DecreaseDeltaTimeHandle);
+	}
+}
+
+void APlayerCharacter::StartSprinting()
+{
+	if (!bIsSprinting)
+	{
+		bIsSprinting = true;
+		float& MaxWalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
+		MaxWalkSpeed *= SprintFactor;
+		StartDecreaseStamina();
+	}
+}
+
+void APlayerCharacter::StopSprinting()
+{
+	if (bIsSprinting)
+	{
+		bIsSprinting = false;
+		float& MaxWalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
+		MaxWalkSpeed /= SprintFactor;
+		StopDecreaseStamina();
+	}
+}
+
+void APlayerCharacter::ProcessSprintAction()
+{
+	bIsSprintPressed = !bIsSprintPressed;
+
+	if (bIsSprintPressed)
+	{
+		StartSprinting();
+	}
+	else
+	{
+		StopSprinting();
+	}
 }
