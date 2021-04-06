@@ -6,10 +6,14 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "ActionPrototype/ActorComponents/BaseResourceComponent.h"
+#include "ActionPrototype/Actors/Weapon.h"
 
 APlayerCharacter::APlayerCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
+	
+	Weapon = CreateDefaultSubobject<UChildActorComponent>(TEXT("Weapon"));
+	Weapon->SetupAttachment(GetMesh());
 
 	// Create and adjust Stamina component
 	StaminaComponent = CreateDefaultSubobject<UBaseResourceComponent>(TEXT("Stamina Component"));
@@ -51,11 +55,20 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 void APlayerCharacter::BeginPlay()
 {
 	StaminaDecreaseDeltaTime = StaminaDecreaseFrequency > 0.f ? 1.f / StaminaDecreaseFrequency : 0.f;
+	
 	Coins = 0;
+	
 	StaminaComponent->OnCurrentValueIncreased.AddDynamic(this, &APlayerCharacter::BroadcastStaminaIncreased);
 	StaminaComponent->OnCurrentValueDecreased.AddDynamic(this, &APlayerCharacter::BroadcastStaminaDecreased);
+	
 	Super::BeginPlay();
+	
 	OnPlayerSpawned.Broadcast();
+
+	if (GetMesh() != nullptr)
+	{
+		Weapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepWorldTransform, FName("hand_rSocket"));
+	}
 }
 
 void APlayerCharacter::Tick(float DeltaTime)
@@ -95,6 +108,16 @@ bool APlayerCharacter::SetCameraPitchSensitivity(const float NewSensitivity)
 	CameraPitchSensitivity = NewSensitivity;
 
 	return true;
+}
+
+void APlayerCharacter::EquipWeapon(TSubclassOf<AWeapon> NewWeapon)
+{
+	if (Weapon->GetClass() == NewWeapon)
+	{
+		return;
+	}
+
+	Weapon->SetChildActorClass(NewWeapon);
 }
 
 float APlayerCharacter::GetCurrentStamina() const

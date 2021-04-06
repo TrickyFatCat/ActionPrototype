@@ -9,6 +9,7 @@
 class USpringArmComponent;
 class UCameraComponent;
 class UBaseResourceComponent;
+class AWeapon;
 
 UENUM(BlueprintType)
 enum class EStaminaStatus : uint8
@@ -52,6 +53,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Player|Camera")
 	bool SetCameraPitchSensitivity(const float NewSensitivity);
 
+	UFUNCTION(BlueprintCallable, Category="Player|Weapon")
+	void EquipWeapon(TSubclassOf<AWeapon> NewWeapon);
+
 	UFUNCTION(BlueprintPure, Category="Player|Stamina")
 	float GetCurrentStamina() const;
 	UFUNCTION(BlueprintPure, Category="Player|Stamina")
@@ -93,12 +97,22 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
+	UChildActorComponent* Weapon{nullptr};
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category="Components", meta=(AllowPrivateAccess = "true"))
 	USpringArmComponent* SpringArmComponent{nullptr};
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category="Components", meta=(AllowPrivateAccess = "true"))
 	UCameraComponent* CameraComponent{nullptr};
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	UBaseResourceComponent* StaminaComponent{nullptr};
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Player|Weapon", meta=(AllowPrivateAccess="true"))
+	FName WeaponSocketName{"hand_rSocket"};
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Player|Weapon", meta=(AllowPrivateAccess="true"))
+	TSubclassOf<AWeapon> DefaultWeapon{nullptr};
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Player|Weapon", meta=(AllowPrivateAccess="true"))
+	TSubclassOf<AWeapon> EquippedWeapon{nullptr};
+	
 
 	UPROPERTY(
 		EditAnywhere,
