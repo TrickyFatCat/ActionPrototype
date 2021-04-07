@@ -52,12 +52,7 @@ void ABasePickupItem::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-void ABasePickupItem::ProcessInteraction_Implementation(const APlayerCharacter* PlayerCharacter)
-{
-	ProcessPickup(PlayerCharacter);
-}
-
-void ABasePickupItem::ProcessPickup(const APlayerCharacter* PlayerCharacter)
+void ABasePickupItem::ProcessPickup( APlayerCharacter* PlayerCharacter)
 {
 	if (PickupMainParticles != nullptr)
 	{
@@ -69,7 +64,8 @@ void ABasePickupItem::ProcessPickup(const APlayerCharacter* PlayerCharacter)
 		UGameplayStatics::PlaySoundAtLocation(this, PickupSound, MeshInitialLocation);
 	}
 
-	OnPickup(PlayerCharacter);
+	ActivatePickupEffect(PlayerCharacter);
+	OnPickup();
 	Destroy();
 }
 
@@ -77,6 +73,10 @@ void ABasePickupItem::SetAnimationSpeed(const float NewAnimationSpeed)
 {
 	AnimationSpeed = NewAnimationSpeed;
 	PickupAnimationTimeline->SetPlayRate(AnimationSpeed);
+}
+
+void ABasePickupItem::ActivatePickupEffect(APlayerCharacter* PlayerCharacter)
+{
 }
 
 void ABasePickupItem::AnimateMeshLocation(const float AnimationProgress) const

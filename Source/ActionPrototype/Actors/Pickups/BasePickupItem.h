@@ -17,7 +17,7 @@ class UParticleSystem;
 class APlayerCharacter;
 
 UCLASS()
-class ACTIONPROTOTYPE_API ABasePickupItem : public AActor, public IReactToInteraction 
+class ACTIONPROTOTYPE_API ABasePickupItem : public AActor
 {
 	GENERATED_BODY()
 
@@ -33,12 +33,8 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Pickup", meta=(AllowPrivateAccess="true"))
-	bool bIsInteractable{false};
-	void ProcessInteraction_Implementation(const APlayerCharacter* PlayerCharacter) override;
-
 	UFUNCTION(BlueprintCallable, Category="Pickup")
-	void ProcessPickup(const APlayerCharacter* PlayerCharacter);
+	void ProcessPickup(APlayerCharacter* PlayerCharacter);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Pickup|Effects")
 	UParticleSystem* PickupMainParticles{nullptr};
@@ -57,7 +53,8 @@ public:
 
 protected:
 	UFUNCTION(BlueprintImplementableEvent, Category="Pickup")
-	void OnPickup(const APlayerCharacter* PlayerCharacter);
+	void OnPickup();
+	virtual void ActivatePickupEffect(APlayerCharacter* PlayerCharacter);
 
 private:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
@@ -80,3 +77,4 @@ private:
 	UFUNCTION()
 	void AnimatePickupMesh(const float AnimationProgress) const;
 };
+
