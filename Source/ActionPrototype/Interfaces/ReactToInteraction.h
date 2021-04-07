@@ -26,6 +26,6 @@ class ACTIONPROTOTYPE_API IReactToInteraction
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction Interface")
-	void ProcessInteraction(const APlayerCharacter* PlayerCharacter);
+	void ProcessInteraction(APlayerCharacter* PlayerCharacter);
 	TScriptInterface<bool> bIsInteractable{};
 };
