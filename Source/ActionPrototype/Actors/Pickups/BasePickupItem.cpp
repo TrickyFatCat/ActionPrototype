@@ -2,6 +2,8 @@
 
 
 #include "BasePickupItem.h"
+
+#include "ActionPrototype/Characters/PlayerCharacter.h"
 #include "Components/SphereComponent.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Components/TimelineComponent.h"
@@ -16,8 +18,6 @@ ABasePickupItem::ABasePickupItem()
 
 	TriggerVolume = CreateDefaultSubobject<USphereComponent>(TEXT("Pickup Collision"));
 	RootComponent = TriggerVolume;
-	TriggerVolume->OnComponentBeginOverlap.AddDynamic(this, &ABasePickupItem::TriggerOverlapBegin);
-	TriggerVolume->OnComponentEndOverlap.AddDynamic(this, &ABasePickupItem::TriggerOverlapEnd);
 
 	PickupMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Pickup Mesh"));
 	PickupMesh->SetupAttachment(RootComponent);
@@ -52,14 +52,31 @@ void ABasePickupItem::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
+void ABasePickupItem::ProcessInteraction_Implementation(const APlayerCharacter* PlayerCharacter)
+{
+	ProcessPickup(PlayerCharacter);
+}
+
+void ABasePickupItem::ProcessPickup(const APlayerCharacter* PlayerCharacter)
+{
+	if (PickupMainParticles != nullptr)
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(this, PickupMainParticles, MeshInitialLocation);
+	}
+
+	if (PickupSound != nullptr)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, PickupSound, MeshInitialLocation);
+	}
+
+	OnPickup(PlayerCharacter);
+	Destroy();
+}
+
 void ABasePickupItem::SetAnimationSpeed(const float NewAnimationSpeed)
 {
 	AnimationSpeed = NewAnimationSpeed;
 	PickupAnimationTimeline->SetPlayRate(AnimationSpeed);
-}
-
-void ABasePickupItem::ProcessPickupEffect()
-{
 }
 
 void ABasePickupItem::AnimateMeshLocation(const float AnimationProgress) const
@@ -79,34 +96,4 @@ void ABasePickupItem::AnimatePickupMesh(const float AnimationProgress) const
 {
 	AnimateMeshLocation(AnimationProgress);
 	AnimateMeshRotation();
-}
-
-void ABasePickupItem::TriggerOverlapBegin_Implementation(
-	UPrimitiveComponent* OverlappedComponent,
-	AActor* OtherActor,
-	UPrimitiveComponent* OtherComp,
-	int32 OtherBodyIndex,
-	bool bFromSweep,
-	const FHitResult& SweepResult)
-{
-	if (PickupMainParticles != nullptr)
-	{
-		UGameplayStatics::SpawnEmitterAtLocation(this, PickupMainParticles, MeshInitialLocation);
-	}
-
-	if (PickupSound != nullptr)
-	{
-		UGameplayStatics::PlaySoundAtLocation(this, PickupSound, MeshInitialLocation);
-	}
-
-	OnPickup(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
-	Destroy();
-}
-
-void ABasePickupItem::TriggerOverlapEnd_Implementation(
-	UPrimitiveComponent* OverlappedComponent,
-	AActor* OtherActor,
-	UPrimitiveComponent* OtherComp,
-	int32 OtherBodyIndex)
-{
 }

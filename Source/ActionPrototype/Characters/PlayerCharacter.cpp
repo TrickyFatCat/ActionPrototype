@@ -7,11 +7,14 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "ActionPrototype/ActorComponents/BaseResourceComponent.h"
 #include "ActionPrototype/Actors/Weapon.h"
+#include "ActionPrototype/Actors/Pickups/BasePickupItem.h"
+#include "ActionPrototype/Interfaces/ReactToInteraction.h"
+#include "Components/CapsuleComponent.h"
 
 APlayerCharacter::APlayerCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	
+
 	Weapon = CreateDefaultSubobject<UChildActorComponent>(TEXT("Weapon"));
 	Weapon->SetupAttachment(GetMesh());
 
@@ -50,25 +53,29 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &APlayerCharacter::ProcessSprintAction);
 	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &APlayerCharacter::ProcessSprintAction);
+	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &APlayerCharacter::Interact);
 }
 
 void APlayerCharacter::BeginPlay()
 {
 	StaminaDecreaseDeltaTime = StaminaDecreaseFrequency > 0.f ? 1.f / StaminaDecreaseFrequency : 0.f;
-	
+
 	Coins = 0;
-	
+
 	StaminaComponent->OnCurrentValueIncreased.AddDynamic(this, &APlayerCharacter::BroadcastStaminaIncreased);
 	StaminaComponent->OnCurrentValueDecreased.AddDynamic(this, &APlayerCharacter::BroadcastStaminaDecreased);
-	
+
 	Super::BeginPlay();
-	
+
 	OnPlayerSpawned.Broadcast();
 
 	if (GetMesh() != nullptr)
 	{
 		Weapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepWorldTransform, FName("hand_rSocket"));
 	}
+
+	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::AddToInteractionQueue);
+	GetCapsuleComponent()->OnComponentEndOverlap.AddDynamic(this, &APlayerCharacter::RemoveFromInteractionQueue);
 }
 
 void APlayerCharacter::Tick(float DeltaTime)
@@ -110,7 +117,7 @@ bool APlayerCharacter::SetCameraPitchSensitivity(const float NewSensitivity)
 	return true;
 }
 
-void APlayerCharacter::EquipWeapon(TSubclassOf<AWeapon> NewWeapon)
+void APlayerCharacter::EquipWeapon(const TSubclassOf<AWeapon> NewWeapon) const
 {
 	if (Weapon->GetClass() == NewWeapon)
 	{
@@ -243,6 +250,55 @@ void APlayerCharacter::LookRight(float AxisValue)
 void APlayerCharacter::LookUp(float AxisValue)
 {
 	AddControllerPitchInput(AxisValue * CameraPitchSensitivity * GetWorld()->GetDeltaSeconds());
+}
+
+void APlayerCharacter::Interact()
+{
+	if (InteractionQueue.Num() == 0)
+	{
+		return;
+	}
+
+	IReactToInteraction::Execute_ProcessInteraction(InteractionQueue.Array()[0], this);
+}
+
+void APlayerCharacter::AddToInteractionQueue(
+	UPrimitiveComponent* OverlappedComponent,
+	AActor* OtherActor,
+	UPrimitiveComponent* OtherComp,
+	int32 OtherBodyIndex,
+	bool bFromSweep,
+	const FHitResult& SweepResult)
+{
+	if (!OtherActor->GetClass()->ImplementsInterface(UReactToInteraction::StaticClass()))
+	{
+		return;
+	}
+
+	const ABasePickupItem* Pickup = Cast<ABasePickupItem>(OtherActor);
+	
+	if (Pickup != nullptr)
+	{
+		if (!Pickup->bIsInteractable)
+		{
+			Cast<ABasePickupItem>(OtherActor)->ProcessPickup(this);
+			return;
+		}
+	}
+
+	InteractionQueue.Add(OtherActor);
+}
+
+void APlayerCharacter::RemoveFromInteractionQueue(
+	UPrimitiveComponent* OverlappedComponent,
+	AActor* OtherActor,
+	UPrimitiveComponent* OtherComp,
+	int32 OtherBodyIndex)
+{
+	if (InteractionQueue.Find(OtherActor))
+	{
+		InteractionQueue.Remove(OtherActor);
+	}
 }
 
 void APlayerCharacter::BroadcastStaminaIncreased(const float Amount, const float NewValue)

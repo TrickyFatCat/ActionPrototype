@@ -54,7 +54,7 @@ public:
 	bool SetCameraPitchSensitivity(const float NewSensitivity);
 
 	UFUNCTION(BlueprintCallable, Category="Player|Weapon")
-	void EquipWeapon(TSubclassOf<AWeapon> NewWeapon);
+	void EquipWeapon(const TSubclassOf<AWeapon> NewWeapon) const;
 
 	UFUNCTION(BlueprintPure, Category="Player|Stamina")
 	float GetCurrentStamina() const;
@@ -112,7 +112,7 @@ private:
 	TSubclassOf<AWeapon> DefaultWeapon{nullptr};
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Player|Weapon", meta=(AllowPrivateAccess="true"))
 	TSubclassOf<AWeapon> EquippedWeapon{nullptr};
-	
+
 
 	UPROPERTY(
 		EditAnywhere,
@@ -134,8 +134,25 @@ private:
 	void LookRight(float AxisValue);
 	void LookUp(float AxisValue);
 
+	void Interact();
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Player|Interaction", meta=(AllowPrivateAccess="true"))
+	TSet<AActor*> InteractionQueue{};
+	UFUNCTION()
+	void AddToInteractionQueue(
+		UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex,
+		bool bFromSweep,
+		const FHitResult& SweepResult);
+	UFUNCTION()
+	void RemoveFromInteractionQueue(
+		UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex);
+
 	const TArray<float> StaminaThresholds{0.5f, 0.25f};
-	
 	UFUNCTION()
 	void BroadcastStaminaIncreased(const float Amount, const float NewValue);
 	UFUNCTION()

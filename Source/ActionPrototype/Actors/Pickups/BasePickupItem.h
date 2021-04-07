@@ -3,6 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
+
+#include "ActionPrototype/Interfaces/ReactToInteraction.h"
 #include "GameFramework/Actor.h"
 #include "BasePickupItem.generated.h"
 
@@ -11,9 +14,10 @@ class UStaticMeshComponent;
 class UParticleSystemComponent;
 class UTimelineComponent;
 class UParticleSystem;
+class APlayerCharacter;
 
 UCLASS()
-class ACTIONPROTOTYPE_API ABasePickupItem : public AActor
+class ACTIONPROTOTYPE_API ABasePickupItem : public AActor, public IReactToInteraction 
 {
 	GENERATED_BODY()
 
@@ -29,10 +33,18 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Pickup", meta=(AllowPrivateAccess="true"))
+	bool bIsInteractable{false};
+	void ProcessInteraction_Implementation(const APlayerCharacter* PlayerCharacter) override;
+
+	UFUNCTION(BlueprintCallable, Category="Pickup")
+	void ProcessPickup(const APlayerCharacter* PlayerCharacter);
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Pickup|Effects")
 	UParticleSystem* PickupMainParticles{nullptr};
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Pickup|Effects")
 	USoundBase* PickupSound{nullptr};
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Pickup|Animation")
 	UCurveFloat* LocationAnimationCurve{nullptr};
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Pickup|Animation")
@@ -44,32 +56,8 @@ public:
 	void SetAnimationSpeed(const float NewAnimationSpeed);
 
 protected:
-	UFUNCTION(BlueprintImplementableEvent, Category="Pickup Item")
-	void OnPickup(
-		UPrimitiveComponent* OverlappedComponent,
-		AActor* OtherActor,
-		UPrimitiveComponent* OtherComp,
-		int32 OtherBodyIndex,
-		bool bFromSweep,
-		const FHitResult& SweepResult);
-	virtual void ProcessPickupEffect();
-
-	UFUNCTION(BlueprintNativeEvent)
-	void TriggerOverlapBegin(
-			UPrimitiveComponent* OverlappedComponent,
-			AActor* OtherActor,
-			UPrimitiveComponent* OtherComp,
-			int32 OtherBodyIndex,
-			bool bFromSweep,
-			const FHitResult& SweepResult
-		);
-	UFUNCTION(BlueprintNativeEvent)
-	void TriggerOverlapEnd(
-			UPrimitiveComponent* OverlappedComponent,
-			AActor* OtherActor,
-			UPrimitiveComponent* OtherComp,
-			int32 OtherBodyIndex
-		);
+	UFUNCTION(BlueprintImplementableEvent, Category="Pickup")
+	void OnPickup(const APlayerCharacter* PlayerCharacter);
 
 private:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
