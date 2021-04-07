@@ -75,6 +75,7 @@ void APlayerCharacter::BeginPlay()
 	}
 
 	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::AddToInteractionQueue);
+	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::ActivatePickupEffect);
 	GetCapsuleComponent()->OnComponentEndOverlap.AddDynamic(this, &APlayerCharacter::RemoveFromInteractionQueue);
 }
 
@@ -275,17 +276,6 @@ void APlayerCharacter::AddToInteractionQueue(
 		return;
 	}
 
-	const ABasePickupItem* Pickup = Cast<ABasePickupItem>(OtherActor);
-	
-	if (Pickup != nullptr)
-	{
-		if (!Pickup->bIsInteractable)
-		{
-			Cast<ABasePickupItem>(OtherActor)->ProcessPickup(this);
-			return;
-		}
-	}
-
 	InteractionQueue.Add(OtherActor);
 }
 
@@ -298,6 +288,22 @@ void APlayerCharacter::RemoveFromInteractionQueue(
 	if (InteractionQueue.Find(OtherActor))
 	{
 		InteractionQueue.Remove(OtherActor);
+	}
+}
+
+void APlayerCharacter::ActivatePickupEffect(
+	UPrimitiveComponent* OverlappedComponent,
+	AActor* OtherActor,
+	UPrimitiveComponent* OtherComp,
+	int32 OtherBodyIndex,
+	bool bFromSweep,
+	const FHitResult& SweepResult)
+{
+	ABasePickupItem* Pickup = Cast<ABasePickupItem>(OtherActor);
+
+	if (Pickup && !Pickup->GetClass()->ImplementsInterface(UReactToInteraction::StaticClass()))
+	{
+		Pickup->ProcessPickup(this);
 	}
 }
 
