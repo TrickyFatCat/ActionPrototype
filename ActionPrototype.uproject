@@ -18,5 +18,11 @@
 			"Name": "RawInput",
 			"Enabled": true
 		}
+	],
+	"TargetPlatforms": [
+		"LinuxNoEditor",
+		"LinuxAArch64NoEditor",
+		"WindowsNoEditor",
+		"AllDesktop"
 	]
 }
