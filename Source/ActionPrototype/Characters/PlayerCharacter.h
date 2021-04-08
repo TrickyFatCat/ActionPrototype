@@ -10,6 +10,7 @@ class USpringArmComponent;
 class UCameraComponent;
 class UBaseResourceComponent;
 class AWeapon;
+class UAnimMontage;
 
 UENUM(BlueprintType)
 enum class EStaminaStatus : uint8
@@ -93,6 +94,7 @@ public:
 	FOnCoinsDecreased OnCoinsDecreased;
 	UPROPERTY(BlueprintAssignable, Category="Player|Spawn")
 	FOnPlayerSpawned OnPlayerSpawned;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -179,12 +181,10 @@ private:
 	float StaminaDecreaseDeltaTime{1.f};
 	UPROPERTY()
 	FTimerHandle DecreaseDeltaTimeHandle{};
-
 	UFUNCTION()
 	void DecreaseStaminaOnSprint();
 	void StartDecreaseStamina();
 	void StopDecreaseStamina();
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Player|Sprint", meta=(AllowPrivateAccess="true"))
 	bool bIsSprintPressed{false};
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Player|Sprint", meta=(AllowPrivateAccess="true"))
@@ -195,4 +195,18 @@ private:
 	void StopSprinting();
 	UFUNCTION()
 	void ProcessSprintAction();
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Player|Attack", meta=(AllowPrivateAccess="true"))
+	UAnimMontage* AttackMontage{nullptr};
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Player|Attack", meta=(AllowPrivateAccess="true"))
+	bool bAttackPressed{false};
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Player|Attack", meta=(AllowPrivateAccess="true"))
+	bool bIsAttacking{false};
+	UFUNCTION()
+	void Attack();
+	UFUNCTION()
+	void ProcessAttackAction();
+	UFUNCTION(BlueprintCallable, Category="Player|Attack")
+	void FinishAttack();
+	
 };

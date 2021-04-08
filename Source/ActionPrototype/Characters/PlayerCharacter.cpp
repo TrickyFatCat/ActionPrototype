@@ -10,6 +10,7 @@
 #include "ActionPrototype/Actors/Pickups/BasePickupItem.h"
 #include "ActionPrototype/Interfaces/ReactToInteraction.h"
 #include "Components/CapsuleComponent.h"
+#include "Animation/AnimInstance.h"
 
 APlayerCharacter::APlayerCharacter()
 {
@@ -54,6 +55,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &APlayerCharacter::ProcessSprintAction);
 	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &APlayerCharacter::ProcessSprintAction);
 	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &APlayerCharacter::Interact);
+	PlayerInputComponent->BindAction("Attack", IE_Pressed, this, &APlayerCharacter::ProcessAttackAction);
+	PlayerInputComponent->BindAction("Attack", IE_Released, this, &APlayerCharacter::ProcessAttackAction);
 }
 
 void APlayerCharacter::BeginPlay()
@@ -82,6 +85,11 @@ void APlayerCharacter::BeginPlay()
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (bAttackPressed && !bIsAttacking)
+	{
+		Attack();
+	}
 }
 
 bool APlayerCharacter::SetCameraYawSensitivity(const float NewSensitivity)
@@ -223,7 +231,7 @@ void APlayerCharacter::SetSprintStaminaDecreaseFrequency(const float NewFrequenc
 
 void APlayerCharacter::MoveForward(float AxisValue)
 {
-	if (Controller != nullptr && AxisValue != 0)
+	if (Controller != nullptr && AxisValue != 0 && !bIsAttacking)
 	{
 		const FRotator ControllerRotation = Controller->GetControlRotation();
 		const FRotator NewYawRotation(0.f, ControllerRotation.Yaw, 0.f);
@@ -234,7 +242,7 @@ void APlayerCharacter::MoveForward(float AxisValue)
 
 void APlayerCharacter::MoveRight(float AxisValue)
 {
-	if (Controller != nullptr && AxisValue != 0)
+	if (Controller != nullptr && AxisValue != 0 && !bIsAttacking)
 	{
 		const FRotator ControllerRotation = Controller->GetControlRotation();
 		const FRotator NewYawRotation(0.f, ControllerRotation.Yaw, 0.f);
@@ -395,4 +403,37 @@ void APlayerCharacter::ProcessSprintAction()
 	{
 		StopSprinting();
 	}
+}
+
+void APlayerCharacter::Attack()
+{
+	if (Weapon->GetChildActorClass() == nullptr || AttackMontage == nullptr)
+	{
+		return;
+	}
+
+	bIsAttacking = true;
+	
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+
+	if (AnimInstance != nullptr)
+	{
+		AnimInstance->Montage_Play(AttackMontage, 1.f);
+		AnimInstance->Montage_JumpToSection(FName("Attack_1"), AttackMontage);
+	}
+}
+
+void APlayerCharacter::ProcessAttackAction()
+{
+	bAttackPressed = !bAttackPressed;
+
+	if (bAttackPressed)
+	{
+		Attack();
+	}
+}
+
+void APlayerCharacter::FinishAttack()
+{
+	bIsAttacking = false;
 }
