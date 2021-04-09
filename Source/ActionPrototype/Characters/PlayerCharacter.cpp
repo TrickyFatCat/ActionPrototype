@@ -85,11 +85,6 @@ void APlayerCharacter::BeginPlay()
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	if (bAttackPressed && !bIsAttacking)
-	{
-		Attack();
-	}
 }
 
 bool APlayerCharacter::SetCameraYawSensitivity(const float NewSensitivity)
@@ -407,13 +402,12 @@ void APlayerCharacter::ProcessSprintAction()
 
 void APlayerCharacter::Attack()
 {
-	if (Weapon->GetChildActorClass() == nullptr || AttackMontage == nullptr)
+	if (Weapon->GetChildActorClass() == nullptr || AttackMontage == nullptr || bIsAttacking)
 	{
 		return;
 	}
 
 	bIsAttacking = true;
-	
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 
 	if (AnimInstance != nullptr)
@@ -436,4 +430,9 @@ void APlayerCharacter::ProcessAttackAction()
 void APlayerCharacter::FinishAttack()
 {
 	bIsAttacking = false;
+	
+	if (bAttackPressed && !bIsAttacking)
+	{
+		Attack();
+	}
 }
