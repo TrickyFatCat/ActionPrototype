@@ -412,8 +412,10 @@ void APlayerCharacter::Attack()
 
 	if (AnimInstance != nullptr)
 	{
+		const int32 AnimMontageSection = FMath::RandRange(0, 1);
+		const FName SectionName = AnimMontageSection > 0 ? "Attack_1" : "Attack_2";
 		AnimInstance->Montage_Play(AttackMontage, 1.f);
-		AnimInstance->Montage_JumpToSection(FName("Attack_1"), AttackMontage);
+		AnimInstance->Montage_JumpToSection(SectionName, AttackMontage);
 	}
 }
 
