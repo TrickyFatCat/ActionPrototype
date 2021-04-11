@@ -7,6 +7,7 @@
 #include "EnemyCharacter.generated.h"
 
 class USphereComponent;
+class AAIController;
 
 UENUM()
 enum class EEnemyState : uint8
@@ -40,13 +41,18 @@ public:
 	float AttackRadius{256.f};
 
 protected:
+	bool IsPlayerVisible();
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Enemy|State", meta=(AllowPrivateAccess="true"))
 	EEnemyState CurrentState{EEnemyState::Idle};
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Enemy|AI", meta=(AllowPrivateAccess="true"))
+	AAIController* EnemyController{nullptr};
 
 	UFUNCTION()
-	void ChaseTarget();
+	void ChaseTarget(ABaseCharacter* TargetCharacter);
+	void AttackTarget(ABaseCharacter* TargetCharacter);
+	
 
 	void CheckDistanceToPlayer();
 };
