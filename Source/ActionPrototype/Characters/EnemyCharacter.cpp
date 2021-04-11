@@ -11,10 +11,6 @@ void AEnemyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	EnemyController = Cast<AAIController>(GetController());
-	if (EnemyController)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Controller found"));
-	}
 }
 
 AEnemyCharacter::AEnemyCharacter()
@@ -24,7 +20,7 @@ AEnemyCharacter::AEnemyCharacter()
 void AEnemyCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-	CheckDistanceToPlayer();
+	ProcessEnemyStates();
 }
 
 bool AEnemyCharacter::IsPlayerVisible()
@@ -49,9 +45,11 @@ bool AEnemyCharacter::IsPlayerVisible()
 												  );
 }
 
-void AEnemyCharacter::ChaseTarget(ABaseCharacter* TargetCharacter)
+void AEnemyCharacter::ChasePlayer()
 {
-	if (EnemyController == nullptr)
+	AActor* PlayerActor = Cast<AActor>(UGameplayStatics::GetPlayerCharacter(this, 0));
+
+	if (EnemyController == nullptr || PlayerActor == nullptr)
 	{
 		return;
 	}
@@ -61,14 +59,19 @@ void AEnemyCharacter::ChaseTarget(ABaseCharacter* TargetCharacter)
 		CurrentState = EEnemyState::Chase;
 	}
 
-	EnemyController->MoveToActor(Cast<AActor>(UGameplayStatics::GetPlayerCharacter(this, 0)), AttackRadius - AttackRadius * 0.5f);
+	const float TargetDistance = FMath::FRandRange(ChaseMinDistance, ChaseMaxDistance);
+	EnemyController->MoveToActor(PlayerActor, TargetDistance);
 }
 
-void AEnemyCharacter::AttackTarget(ABaseCharacter* TargetCharacter)
+void AEnemyCharacter::AttackPlayer()
 {
+	if (CurrentState != EEnemyState::Attack)
+	{
+		CurrentState = EEnemyState::Attack;
+	}
 }
 
-void AEnemyCharacter::CheckDistanceToPlayer()
+void AEnemyCharacter::ProcessEnemyStates()
 {
 	APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
 
@@ -78,31 +81,73 @@ void AEnemyCharacter::CheckDistanceToPlayer()
 	}
 
 	const float DistanceToPlayer = GetDistanceTo(PlayerCharacter);
+	const bool bIsFollowingPath = EnemyController->IsFollowingAPath();
+	const bool bIsPlayerVisible = IsPlayerVisible();
 
-	if (DistanceToPlayer > AggroRadius)
+	switch (CurrentState)
 	{
-		if (EnemyController->IsFollowingAPath())
-		{
-			EnemyController->StopMovement();
-		}
+		case EEnemyState::Idle:
+			if (!bIsPlayerVisible)
+			{
+				return;
+			}
 		
-		if (CurrentState != EEnemyState::Idle)
-			CurrentState = EEnemyState::Idle;
-		return;
-	}
+			if (DistanceToPlayer < AttackRadius)
+			{
+				AttackPlayer();	
+			}
+			else if (DistanceToPlayer < AggroDistance)
+			{
+				ChasePlayer();
+			}
+			break;
+		case EEnemyState::Chase:
+			if (!bIsPlayerVisible)
+			{
+				if (bIsFollowingPath)
+				{
+					EnemyController->StopMovement();
+				}
 
-	if (!IsPlayerVisible())
-	{
-		return;
-	}
+				CurrentState = EEnemyState::Idle;
+				return;
+			}
+			if (DistanceToPlayer < AttackRadius)
+			{
+				AttackPlayer();
+			}
+			else if (DistanceToPlayer < AggroDistance)
+			{
+				ChasePlayer();
+			}
+			else
+			{
+				CurrentState = EEnemyState::Idle;
 
-	if (DistanceToPlayer > AttackRadius && CurrentState != EEnemyState::Chase)
-	{
-		ChaseTarget(Cast<ABaseCharacter>(PlayerCharacter));
-	}
-	else if (DistanceToPlayer <= AttackRadius && CurrentState != EEnemyState::Attack)
-	{
-		CurrentState = EEnemyState::Attack;
-		// attack
+				if (bIsFollowingPath)
+				{
+					EnemyController->StopMovement();
+				}
+			}
+			break;
+		case EEnemyState::Attack:
+			if (!bIsPlayerVisible)
+			{
+				CurrentState = EEnemyState::Idle;
+				return;
+			}
+			if (DistanceToPlayer < AttackRadius)
+			{
+				AttackPlayer();
+			}
+			else if (DistanceToPlayer < AggroDistance)
+			{
+				ChasePlayer();
+			}
+			else
+			{
+				CurrentState = EEnemyState::Idle;
+			}
+			break;
 	}
 }

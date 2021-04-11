@@ -35,10 +35,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Enemy|State")
 	EEnemyState InitialState{EEnemyState::Idle};
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Enemy")
-	float AggroRadius{512.f};
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Enemy")
-	float AttackRadius{256.f};
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Enemy|AI")
+	float AggroDistance{1024.f};
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Enemy|AI")
+	float AttackRadius{512.f};
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Enemy|AI")
+	float ChaseMinDistance{64.f};
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Enemey|AI")
+	float ChaseMaxDistance{128.f};
 
 protected:
 	bool IsPlayerVisible();
@@ -49,10 +53,9 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Enemy|AI", meta=(AllowPrivateAccess="true"))
 	AAIController* EnemyController{nullptr};
 
-	UFUNCTION()
-	void ChaseTarget(ABaseCharacter* TargetCharacter);
-	void AttackTarget(ABaseCharacter* TargetCharacter);
+	void ChasePlayer();
+	void AttackPlayer();
 	
 
-	void CheckDistanceToPlayer();
+	void ProcessEnemyStates();
 };
