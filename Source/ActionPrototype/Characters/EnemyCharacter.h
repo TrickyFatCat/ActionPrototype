@@ -38,7 +38,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Enemy|AI")
 	float AggroDistance{1024.f};
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Enemy|AI")
-	float AttackRadius{512.f};
+	float AttackRadius{256.f};
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Enemy|AI")
 	float ChaseMinDistance{64.f};
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Enemey|AI")

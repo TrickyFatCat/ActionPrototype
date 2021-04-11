@@ -6,6 +6,7 @@
 #include "PlayerCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "AIModule/Classes/AIController.h"
+#include "DrawDebugHelpers.h"
 
 void AEnemyCharacter::BeginPlay()
 {
@@ -25,24 +26,30 @@ void AEnemyCharacter::Tick(float DeltaSeconds)
 
 bool AEnemyCharacter::IsPlayerVisible()
 {
-	const APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
+	APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
 
 	if (PlayerCharacter == nullptr)
 	{
 		return false;
 	}
+	
+	FCollisionQueryParams CollisionQueryParams;
+	CollisionQueryParams.AddIgnoredActor(this);
+	FHitResult HitResult;
+	FVector CurrentLocation = GetActorLocation();
+	FVector DirectionToPlayer = PlayerCharacter->GetActorLocation() - CurrentLocation;
+	DirectionToPlayer.Normalize();
+	FVector TargetPoint = CurrentLocation + DirectionToPlayer * AggroDistance;
+	
+	GetWorld()->LineTraceSingleByChannel(HitResult, CurrentLocation, TargetPoint, ECollisionChannel::ECC_Visibility, CollisionQueryParams);
+	const APlayerCharacter* HitActor = Cast<APlayerCharacter>(HitResult.GetActor());
+	
+	if (HitResult.GetActor() == PlayerCharacter)
+	{
+		return true;
+	}
 
-	FHitResult TraceHitResult;
-	const FCollisionQueryParams TraceCollisionParams = FCollisionQueryParams(FName(""), false, this);
-	return GetWorld()->LineTraceSingleByObjectType(
-												   TraceHitResult,
-												   this->GetActorLocation(),
-												   PlayerCharacter->GetActorLocation(),
-												   FCollisionObjectQueryParams(
-																			   ECollisionChannel::ECC_GameTraceChannel1
-																			  ),
-												   TraceCollisionParams
-												  );
+	return false;
 }
 
 void AEnemyCharacter::ChasePlayer()
@@ -81,6 +88,12 @@ void AEnemyCharacter::ProcessEnemyStates()
 	}
 
 	const float DistanceToPlayer = GetDistanceTo(PlayerCharacter);
+
+	if (DistanceToPlayer > AggroDistance)
+	{
+		return;
+	}
+
 	const bool bIsFollowingPath = EnemyController->IsFollowingAPath();
 	const bool bIsPlayerVisible = IsPlayerVisible();
 
@@ -114,6 +127,11 @@ void AEnemyCharacter::ProcessEnemyStates()
 			}
 			if (DistanceToPlayer < AttackRadius)
 			{
+				if (bIsFollowingPath)
+				{
+					EnemyController->StopMovement();
+				}
+				
 				AttackPlayer();
 			}
 			else if (DistanceToPlayer < AggroDistance)
