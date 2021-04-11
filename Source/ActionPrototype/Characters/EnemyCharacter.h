@@ -34,15 +34,19 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Enemy|State")
 	EEnemyState InitialState{EEnemyState::Idle};
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Enemy")
+	float AggroRadius{512.f};
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Enemy")
+	float AttackRadius{256.f};
+
 protected:
 
 private:
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
-	USphereComponent* AggroRadius{nullptr};
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Enemy|State", meta=(AllowPrivateAccess="true"))
 	EEnemyState CurrentState{EEnemyState::Idle};
 
 	UFUNCTION()
 	void ChaseTarget();
+
+	void CheckDistanceToPlayer();
 };
