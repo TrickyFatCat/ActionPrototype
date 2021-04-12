@@ -55,7 +55,7 @@ public:
 	bool SetCameraPitchSensitivity(const float NewSensitivity);
 
 	UFUNCTION(BlueprintCallable, Category="Player|Weapon")
-	void EquipWeapon(const TSubclassOf<AWeapon> NewWeapon) const;
+	void EquipWeapon(const TSubclassOf<AWeapon> NewWeapon);
 
 	UFUNCTION(BlueprintPure, Category="Player|Stamina")
 	float GetCurrentStamina() const;
@@ -208,5 +208,4 @@ private:
 	void ProcessAttackAction();
 	UFUNCTION(BlueprintCallable, Category="Player|Attack")
 	void FinishAttack();
-	
 };

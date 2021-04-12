@@ -121,7 +121,7 @@ bool APlayerCharacter::SetCameraPitchSensitivity(const float NewSensitivity)
 	return true;
 }
 
-void APlayerCharacter::EquipWeapon(const TSubclassOf<AWeapon> NewWeapon) const
+void APlayerCharacter::EquipWeapon(const TSubclassOf<AWeapon> NewWeapon)
 {
 	if (Weapon->GetClass() == NewWeapon)
 	{
@@ -129,6 +129,10 @@ void APlayerCharacter::EquipWeapon(const TSubclassOf<AWeapon> NewWeapon) const
 	}
 
 	Weapon->SetChildActorClass(NewWeapon);
+	if (Weapon->GetChildActor() != nullptr)
+	{
+		Weapon->GetChildActor()->SetOwner(this);
+	}
 }
 
 float APlayerCharacter::GetCurrentStamina() const
@@ -432,7 +436,7 @@ void APlayerCharacter::ProcessAttackAction()
 void APlayerCharacter::FinishAttack()
 {
 	bIsAttacking = false;
-	
+
 	if (bAttackPressed && !bIsAttacking)
 	{
 		Attack();
