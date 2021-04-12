@@ -9,6 +9,8 @@
 class USphereComponent;
 class AAIController;
 
+class UAnimMontage;
+
 UENUM()
 enum class EEnemyState : uint8
 {
@@ -43,19 +45,25 @@ public:
 	float ChaseMinDistance{64.f};
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Enemey|AI")
 	float ChaseMaxDistance{128.f};
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Enemy|Attack")
+	TSet<FName> AttackSectionsNames{};
 
 protected:
-	bool IsPlayerVisible();
+	bool IsPlayerVisible() const;
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Enemy|State", meta=(AllowPrivateAccess="true"))
 	EEnemyState CurrentState{EEnemyState::Idle};
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Enemy|AI", meta=(AllowPrivateAccess="true"))
 	AAIController* EnemyController{nullptr};
-
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Enemy|Attack", meta=(AllowPrivateAccess="true"))
+	UAnimMontage* AttackMontage{nullptr};
+	
 	void ChasePlayer();
 	void AttackPlayer();
-	
+	UFUNCTION(BlueprintCallable, Category="Enemy|Attack")
+	void ContinueAttacking();
 
 	void ProcessEnemyStates();
 };

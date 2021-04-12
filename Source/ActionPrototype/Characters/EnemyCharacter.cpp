@@ -24,7 +24,7 @@ void AEnemyCharacter::Tick(float DeltaSeconds)
 	ProcessEnemyStates();
 }
 
-bool AEnemyCharacter::IsPlayerVisible()
+bool AEnemyCharacter::IsPlayerVisible() const
 {
 	APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
 
@@ -32,7 +32,7 @@ bool AEnemyCharacter::IsPlayerVisible()
 	{
 		return false;
 	}
-	
+
 	FCollisionQueryParams CollisionQueryParams;
 	CollisionQueryParams.AddIgnoredActor(this);
 	FHitResult HitResult;
@@ -40,10 +40,16 @@ bool AEnemyCharacter::IsPlayerVisible()
 	FVector DirectionToPlayer = PlayerCharacter->GetActorLocation() - CurrentLocation;
 	DirectionToPlayer.Normalize();
 	FVector TargetPoint = CurrentLocation + DirectionToPlayer * AggroDistance;
-	
-	GetWorld()->LineTraceSingleByChannel(HitResult, CurrentLocation, TargetPoint, ECollisionChannel::ECC_Visibility, CollisionQueryParams);
+
+	GetWorld()->LineTraceSingleByChannel(
+										 HitResult,
+										 CurrentLocation,
+										 TargetPoint,
+										 ECollisionChannel::ECC_Visibility,
+										 CollisionQueryParams
+										);
 	const APlayerCharacter* HitActor = Cast<APlayerCharacter>(HitResult.GetActor());
-	
+
 	if (HitResult.GetActor() == PlayerCharacter)
 	{
 		return true;
@@ -72,9 +78,56 @@ void AEnemyCharacter::ChasePlayer()
 
 void AEnemyCharacter::AttackPlayer()
 {
+	APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+
+	if (PlayerCharacter == nullptr)
+	{
+		return;
+	}
+
 	if (CurrentState != EEnemyState::Attack)
 	{
 		CurrentState = EEnemyState::Attack;
+	}
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+
+	if (AnimInstance != nullptr && AttackMontage != nullptr)
+	{
+		if (AttackSectionsNames.Num() == 0)
+		{
+			return;
+		}
+		
+		const int32 AnimMontageSection = FMath::RandRange(0, 2);
+		const FName SectionName = AttackSectionsNames.Array()[AnimMontageSection];
+		AnimInstance->Montage_Play(AttackMontage, 1.f);
+		AnimInstance->Montage_JumpToSection(SectionName, AttackMontage);
+	}
+}
+
+void AEnemyCharacter::ContinueAttacking()
+{
+	APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
+
+	if (PlayerCharacter == nullptr)
+	{
+		return;
+	}
+	
+	const float DistanceToPlayer = GetDistanceTo(PlayerCharacter);
+	
+	if (DistanceToPlayer < AttackRadius)
+	{
+		AttackPlayer();
+	}
+	else if (DistanceToPlayer < AggroDistance)
+	{
+		ChasePlayer();
+	}
+	else
+	{
+		CurrentState = EEnemyState::Idle;
 	}
 }
 
@@ -104,10 +157,10 @@ void AEnemyCharacter::ProcessEnemyStates()
 			{
 				return;
 			}
-		
+
 			if (DistanceToPlayer < AttackRadius)
 			{
-				AttackPlayer();	
+				AttackPlayer();
 			}
 			else if (DistanceToPlayer < AggroDistance)
 			{
@@ -131,7 +184,7 @@ void AEnemyCharacter::ProcessEnemyStates()
 				{
 					EnemyController->StopMovement();
 				}
-				
+
 				AttackPlayer();
 			}
 			else if (DistanceToPlayer < AggroDistance)
@@ -153,18 +206,6 @@ void AEnemyCharacter::ProcessEnemyStates()
 			{
 				CurrentState = EEnemyState::Idle;
 				return;
-			}
-			if (DistanceToPlayer < AttackRadius)
-			{
-				AttackPlayer();
-			}
-			else if (DistanceToPlayer < AggroDistance)
-			{
-				ChasePlayer();
-			}
-			else
-			{
-				CurrentState = EEnemyState::Idle;
 			}
 			break;
 	}
