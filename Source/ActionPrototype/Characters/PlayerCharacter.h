@@ -100,7 +100,7 @@ protected:
 
 private:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
-	UChildActorComponent* Weapon{nullptr};
+	UChildActorComponent* WeaponComponent{nullptr};
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category="Components", meta=(AllowPrivateAccess = "true"))
 	USpringArmComponent* SpringArmComponent{nullptr};
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category="Components", meta=(AllowPrivateAccess = "true"))
@@ -209,6 +209,8 @@ private:
 	UFUNCTION(BlueprintCallable, Category="Player|Attack")
 	void FinishAttack();
 
+	UPROPERTY()
+	AWeapon* Weapon{nullptr};
 	UFUNCTION(BlueprintCallable, Category="Playper|Attack")
 	void EnableWeaponCollision() const;
 	UFUNCTION(BlueprintCallable, Category="Player|Attack")
