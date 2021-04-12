@@ -151,23 +151,23 @@ float APlayerCharacter::GetNormalisedStamina() const
 	return StaminaComponent->GetNormalizedValue();
 }
 
-void APlayerCharacter::DecreaseStamina(const float Amount)
+void APlayerCharacter::DecreaseStamina(const float Amount) const
 {
 	StaminaComponent->DecreaseValue(Amount);
 	StaminaComponent->StopAutoChange(); // It's smelly, but it works
 }
 
-void APlayerCharacter::IncreaseStamina(const float Amount)
+void APlayerCharacter::IncreaseStamina(const float Amount) const
 {
 	StaminaComponent->IncreaseValue(Amount);
 }
 
-void APlayerCharacter::IncreaseMaxStamina(const float Amount)
+void APlayerCharacter::IncreaseMaxStamina(const float Amount) const
 {
 	StaminaComponent->IncreaseMaxValue(Amount);
 }
 
-void APlayerCharacter::DecreaseMaxStamina(const float Amount)
+void APlayerCharacter::DecreaseMaxStamina(const float Amount) const
 {
 	StaminaComponent->DecreaseMaxValue(Amount);
 }

@@ -66,13 +66,13 @@ public:
 	UFUNCTION(BlueprintPure, Category="Player|Stamina")
 	float GetNormalisedStamina() const;
 	UFUNCTION(BlueprintCallable, Category="Player|Stamina")
-	void DecreaseStamina(const float Amount);
+	void DecreaseStamina(const float Amount) const;
 	UFUNCTION(BlueprintCallable, Category="Player|Stamina")
-	void IncreaseStamina(const float Amount);
+	void IncreaseStamina(const float Amount) const;
 	UFUNCTION(BlueprintCallable, Category="Player|Stamina")
-	void IncreaseMaxStamina(const float Amount);
+	void IncreaseMaxStamina(const float Amount) const;
 	UFUNCTION(BlueprintCallable, Category="Player|Stamina")
-	void DecreaseMaxStamina(const float Amount);
+	void DecreaseMaxStamina(const float Amount) const;
 	UFUNCTION(BlueprintPure, Category="Player|Stamina")
 	EStaminaStatus GetStaminaStatus() const;
 
