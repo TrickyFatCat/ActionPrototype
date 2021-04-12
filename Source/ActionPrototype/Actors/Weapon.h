@@ -26,8 +26,22 @@ protected:
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Weapon|Damage")
+	float Damage{5.f};
 
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Weapon|Damage", meta=(AllowPrivateAccess="true"))
+	TSubclassOf<UDamageType> DamageTypeClass{nullptr};
+	
+	UFUNCTION()
+	void DealDamage(
+		UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex,
+		bool bFromSweep,
+		const FHitResult& SweepResult);
+
 
 private:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
