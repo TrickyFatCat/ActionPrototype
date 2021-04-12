@@ -66,6 +66,8 @@ public:
 	/** Sets RestoreFrequency and calculates ChangeDelayTime. */
 	UFUNCTION(BlueprintCallable, Category="Resource Component")
 	float SetRestoreFrequency(float NewRestoreFrequency);
+	UFUNCTION()
+	void StopAutoChange();
 
 	/** Calls when CurrentValue increased. */
 	UPROPERTY(BlueprintAssignable, Category="Resource Component|Delegates")
@@ -157,8 +159,7 @@ private:
 	FTimerHandle ChangeTimerHandle{};
 	UFUNCTION()
 	void StartAutoChange();
-	UFUNCTION()
-	void StopAutoChange();
+
 	UFUNCTION()
 	void ChangeCurrentValue();
 

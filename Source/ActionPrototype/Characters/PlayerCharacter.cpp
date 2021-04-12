@@ -154,6 +154,7 @@ float APlayerCharacter::GetNormalisedStamina() const
 void APlayerCharacter::DecreaseStamina(const float Amount)
 {
 	StaminaComponent->DecreaseValue(Amount);
+	StaminaComponent->StopAutoChange(); // It's awful, but it's work
 }
 
 void APlayerCharacter::IncreaseStamina(const float Amount)
