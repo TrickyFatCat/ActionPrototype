@@ -57,6 +57,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Player|Weapon")
 	void EquipWeapon(const TSubclassOf<AWeapon> NewWeapon);
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Player|Stamina")
+	float AttackStaminaCost{10.f};
 	UFUNCTION(BlueprintPure, Category="Player|Stamina")
 	float GetCurrentStamina() const;
 	UFUNCTION(BlueprintPure, Category="Player|Stamina")

@@ -412,6 +412,12 @@ void APlayerCharacter::Attack()
 		return;
 	}
 
+	if (GetCurrentStamina() < AttackStaminaCost)
+	{
+		return;
+	}
+
+	DecreaseStamina(AttackStaminaCost);
 	bIsAttacking = true;
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 
