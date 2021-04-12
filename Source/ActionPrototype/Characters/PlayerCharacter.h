@@ -208,4 +208,9 @@ private:
 	void ProcessAttackAction();
 	UFUNCTION(BlueprintCallable, Category="Player|Attack")
 	void FinishAttack();
+
+	UFUNCTION(BlueprintCallable, Category="Playper|Attack")
+	void EnableWeaponCollision() const;
+	UFUNCTION(BlueprintCallable, Category="Player|Attack")
+	void DisableWeaponCollision() const;
 };

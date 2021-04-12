@@ -13,8 +13,13 @@ AWeapon::AWeapon()
 	
 	SkeletalMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Skeletal Mesh"));
 	RootComponent = SkeletalMesh;
+	
 	WeaponCollision = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Weapon Collision"));
 	WeaponCollision->SetupAttachment(RootComponent);
+	WeaponCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+	WeaponCollision->SetCollisionResponseToChannels(ECollisionResponse::ECR_Ignore);
+	WeaponCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+	DisableCollision();
 }
 
 // Called when the game starts or when spawned
@@ -44,5 +49,15 @@ void AWeapon::DealDamage(
 	}
 
 	UGameplayStatics::ApplyDamage(OtherActor, Damage, GetOwner()->GetInstigatorController(), this, DamageTypeClass);
+}
+
+void AWeapon::EnableCollision() const
+{
+	WeaponCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+}
+
+void AWeapon::DisableCollision() const
+{
+	WeaponCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 

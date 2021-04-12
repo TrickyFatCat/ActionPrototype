@@ -442,3 +442,13 @@ void APlayerCharacter::FinishAttack()
 		Attack();
 	}
 }
+
+void APlayerCharacter::EnableWeaponCollision() const
+{
+	Cast<AWeapon>(Weapon->GetChildActor())->EnableCollision();
+}
+
+void APlayerCharacter::DisableWeaponCollision() const
+{
+	Cast<AWeapon>(Weapon->GetChildActor())->DisableCollision();
+}

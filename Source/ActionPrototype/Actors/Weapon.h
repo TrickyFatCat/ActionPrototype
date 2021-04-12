@@ -28,6 +28,10 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Weapon|Damage")
 	float Damage{5.f};
+	UFUNCTION()
+	void EnableCollision() const;
+	UFUNCTION()
+	void DisableCollision() const;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Weapon|Damage", meta=(AllowPrivateAccess="true"))
@@ -42,10 +46,11 @@ protected:
 		bool bFromSweep,
 		const FHitResult& SweepResult);
 
-
 private:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	UCapsuleComponent* WeaponCollision{nullptr};
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	USkeletalMeshComponent* SkeletalMesh{nullptr};
+	
+	
 };
