@@ -12,6 +12,12 @@ void AEnemyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	EnemyController = Cast<AAIController>(GetController());
+
+	if (EnemyController == nullptr)
+	{
+		this->SpawnDefaultController();
+		EnemyController = Cast<AAIController>(GetController());
+	}
 }
 
 AEnemyCharacter::AEnemyCharacter()
@@ -48,7 +54,6 @@ bool AEnemyCharacter::IsPlayerVisible() const
 										 ECollisionChannel::ECC_Visibility,
 										 CollisionQueryParams
 										);
-	const APlayerCharacter* HitActor = Cast<APlayerCharacter>(HitResult.GetActor());
 
 	if (HitResult.GetActor() == PlayerCharacter)
 	{
@@ -117,6 +122,7 @@ void AEnemyCharacter::AttackPlayer()
 		AnimInstance->Montage_JumpToSection(SectionName, AttackMontage);
 	}
 
+	// Terrible solution, but the better one is overkill for this project
 	FVector DirectionToPlayer = PlayerCharacter->GetActorLocation() - GetActorLocation();
 	DirectionToPlayer.Normalize();
 	SetActorRotation(DirectionToPlayer.Rotation());
@@ -149,6 +155,11 @@ void AEnemyCharacter::ContinueAttacking()
 
 void AEnemyCharacter::ProcessEnemyStates()
 {
+	if (EnemyController == nullptr)
+	{
+		return;
+	}
+	
 	APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
 
 	if (PlayerCharacter == nullptr)
