@@ -16,9 +16,6 @@ APlayerCharacter::APlayerCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	WeaponComponent = CreateDefaultSubobject<UChildActorComponent>(TEXT("Weapon"));
-	WeaponComponent->SetupAttachment(GetMesh());
-
 	// Create and adjust Stamina component
 	StaminaComponent = CreateDefaultSubobject<UBaseResourceComponent>(TEXT("Stamina Component"));
 
@@ -72,11 +69,6 @@ void APlayerCharacter::BeginPlay()
 
 	OnPlayerSpawned.Broadcast();
 
-	if (GetMesh() != nullptr)
-	{
-		WeaponComponent->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepWorldTransform, FName("hand_rSocket"));
-	}
-
 	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::AddToInteractionQueue);
 	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::ActivatePickupEffect);
 	GetCapsuleComponent()->OnComponentEndOverlap.AddDynamic(this, &APlayerCharacter::RemoveFromInteractionQueue);
@@ -119,21 +111,6 @@ bool APlayerCharacter::SetCameraPitchSensitivity(const float NewSensitivity)
 	CameraPitchSensitivity = NewSensitivity;
 
 	return true;
-}
-
-void APlayerCharacter::EquipWeapon(const TSubclassOf<AWeapon> NewWeapon)
-{
-	if (WeaponComponent->GetClass() == NewWeapon)
-	{
-		return;
-	}
-
-	WeaponComponent->SetChildActorClass(NewWeapon);
-	Weapon = Cast<AWeapon>(WeaponComponent->GetChildActor());
-	if (WeaponComponent->GetChildActor() != nullptr)
-	{
-		WeaponComponent->GetChildActor()->SetOwner(this);
-	}
 }
 
 float APlayerCharacter::GetCurrentStamina() const
@@ -408,7 +385,12 @@ void APlayerCharacter::ProcessSprintAction()
 
 void APlayerCharacter::Attack()
 {
-	if (WeaponComponent->GetChildActorClass() == nullptr || AttackMontage == nullptr || bIsAttacking)
+	if ((GetLeftWeapon() == nullptr && GetRightWeapon() == nullptr) || AttackMontage == nullptr)
+	{
+		return;
+	}
+	
+	if (bIsAttacking)
 	{
 		return;
 	}
@@ -449,14 +431,4 @@ void APlayerCharacter::FinishAttack()
 	{
 		Attack();
 	}
-}
-
-void APlayerCharacter::EnableWeaponCollision() const
-{
-	Weapon->EnableCollision();
-}
-
-void APlayerCharacter::DisableWeaponCollision() const
-{
-	Weapon->DisableCollision();
 }

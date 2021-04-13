@@ -54,9 +54,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Player|Camera")
 	bool SetCameraPitchSensitivity(const float NewSensitivity);
 
-	UFUNCTION(BlueprintCallable, Category="Player|Weapon")
-	void EquipWeapon(const TSubclassOf<AWeapon> NewWeapon);
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Player|Stamina")
 	float AttackStaminaCost{10.f};
 	UFUNCTION(BlueprintPure, Category="Player|Stamina")
@@ -101,22 +98,12 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
-	UChildActorComponent* WeaponComponent{nullptr};
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category="Components", meta=(AllowPrivateAccess = "true"))
 	USpringArmComponent* SpringArmComponent{nullptr};
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category="Components", meta=(AllowPrivateAccess = "true"))
 	UCameraComponent* CameraComponent{nullptr};
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	UBaseResourceComponent* StaminaComponent{nullptr};
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Player|Weapon", meta=(AllowPrivateAccess="true"))
-	FName WeaponSocketName{"hand_rSocket"};
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Player|Weapon", meta=(AllowPrivateAccess="true"))
-	TSubclassOf<AWeapon> DefaultWeapon{nullptr};
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Player|Weapon", meta=(AllowPrivateAccess="true"))
-	TSubclassOf<AWeapon> EquippedWeapon{nullptr};
-
 
 	UPROPERTY(
 		EditAnywhere,
@@ -210,11 +197,4 @@ private:
 	void ProcessAttackAction();
 	UFUNCTION(BlueprintCallable, Category="Player|Attack")
 	void FinishAttack();
-
-	UPROPERTY()
-	AWeapon* Weapon{nullptr};
-	UFUNCTION(BlueprintCallable, Category="Playper|Attack")
-	void EnableWeaponCollision() const;
-	UFUNCTION(BlueprintCallable, Category="Player|Attack")
-	void DisableWeaponCollision() const;
 };

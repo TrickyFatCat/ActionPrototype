@@ -7,6 +7,14 @@
 #include "GameFramework/Actor.h"
 #include "Weapon.generated.h"
 
+
+UENUM(BlueprintType)
+enum class EWeaponSlot : uint8
+{
+	Left,
+	Right
+};
+
 class UCapsuleComponent;
 class USkeletalMeshComponent;
 
@@ -32,6 +40,8 @@ public:
 	void EnableCollision() const;
 	UFUNCTION()
 	void DisableCollision() const;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Weapon")
+	EWeaponSlot WeaponSlot{EWeaponSlot::Left};
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Weapon|Damage", meta=(AllowPrivateAccess="true"))
@@ -51,6 +61,4 @@ private:
 	UCapsuleComponent* WeaponCollision{nullptr};
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	USkeletalMeshComponent* SkeletalMesh{nullptr};
-	
-	
 };

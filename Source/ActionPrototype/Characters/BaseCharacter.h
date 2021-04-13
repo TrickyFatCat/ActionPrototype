@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 
 #include "GameFramework/Character.h"
+#include "ActionPrototype/Actors/Weapon.h"
 #include "BaseCharacter.generated.h"
 
 class UBaseResourceComponent;
@@ -57,6 +58,12 @@ public:
 	UPROPERTY(BlueprintAssignable, Category="Character Health")
 	FOnMaxHealthDecreased OnMaxHealthDecreased;
 
+	UFUNCTION(BlueprintCallable, Category="Weapon")
+	void EquipWeapon(const TSubclassOf<AWeapon> NewWeapon, const EWeaponSlot WeaponSlot);
+	UFUNCTION(BlueprintPure, Category="Weapon")
+	AWeapon* GetLeftWeapon() const;
+	UFUNCTION(BlueprintPure, Category="Weapon")
+	AWeapon* GetRightWeapon() const;
 protected:
 	virtual void BeginPlay() override;
 	
@@ -71,4 +78,25 @@ private:
 	void BroadcastCurrentHealthIncreased(const float Amount, const float CurrentHealth);
 	UFUNCTION()
 	void BroadcastCurrentHealthDecreased(const float Amount, const float CurrentHealth);
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="Weapon", meta=(AllowPrivateAccess="true"))
+	UChildActorComponent* LeftWeaponComponent{nullptr};
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="Weapon", meta=(AllowPrivateAccess="true"))
+	UChildActorComponent* RightWeaponComponent{nullptr};
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Weapon", meta=(AllowPrivateAccess="true"))
+	AWeapon* LeftWeapon{nullptr};
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Weapon", meta=(AllowPrivateAccess="true"))
+	AWeapon* RightWeapon{nullptr};
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Weapon", meta=(AllowPrivateAccess="true"))
+	FName LeftWeaponSocketName{"LeftWeaponSocket"};
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Weapon", meta=(AllowPrivateAccess="true"))
+	FName RightWeaponSocketName{"RightWeaponSocket"};
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Weapon", meta=(AllowPrivateAccess="true"))
+	TSubclassOf<AWeapon> DefaultLeftWeaponClass{nullptr};
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Weapon", meta=(AllowPrivateAccess="true"))
+	TSubclassOf<AWeapon> DefaultRightWeaponClass{nullptr};
+	UFUNCTION(BlueprintCallable, Category="Weapon")
+	void SwitchLeftWeaponCollision(const bool bIsEnabled) const;
+	UFUNCTION(BlueprintCallable, Category="Weapon")
+	void SwitchRightWeaponCollision(const bool bIsEnabled) const;
 };
