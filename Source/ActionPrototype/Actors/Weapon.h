@@ -40,8 +40,6 @@ public:
 	void EnableCollision() const;
 	UFUNCTION()
 	void DisableCollision() const;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Weapon")
-	EWeaponSlot WeaponSlot{EWeaponSlot::Left};
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Weapon|Damage", meta=(AllowPrivateAccess="true"))
