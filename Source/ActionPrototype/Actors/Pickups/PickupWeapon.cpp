@@ -11,7 +11,7 @@ void APickupWeapon::ActivatePickupEffect(APlayerCharacter* PlayerCharacter)
 		return;
 	}
 
-	PlayerCharacter->EquipWeapon(WeaponClass);
+	PlayerCharacter->EquipWeapon(WeaponClass, WeaponSlot);
 }
 
 

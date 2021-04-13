@@ -6,23 +6,22 @@
 
 #include "BaseInteractablePickupItem.h"
 #include "BasePickupItem.h"
+#include "ActionPrototype/Actors/Weapon.h"
 
 #include "PickupWeapon.generated.h"
 
-class AWeapon;
-/**
- * 
- */
 UCLASS()
 class ACTIONPROTOTYPE_API APickupWeapon : public ABaseInteractablePickupItem 
 {
 	GENERATED_BODY()
 
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Weapon pickup")
+	EWeaponSlot WeaponSlot{EWeaponSlot::Right};
 protected:
 	virtual void ActivatePickupEffect(APlayerCharacter* PlayerCharacter) override;
 
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Weapon pickup", meta=(AllowPrivateAccess="true"))
 	TSubclassOf<AWeapon> WeaponClass{nullptr};
-	
 };
