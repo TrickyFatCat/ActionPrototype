@@ -58,6 +58,18 @@ bool AEnemyCharacter::IsPlayerVisible() const
 	return false;
 }
 
+void AEnemyCharacter::StartAttackDelayTimer()
+{
+	const float DelayTimer = FMath::FRandRange(MinAttackDelay, MaxAttackDelay);
+	GetWorld()->GetTimerManager().SetTimer(
+										   AttackDelayHandle,
+										   this,
+										   &AEnemyCharacter::ContinueAttacking,
+										   DelayTimer,
+										   false
+										  );
+}
+
 void AEnemyCharacter::ChasePlayer()
 {
 	AActor* PlayerActor = Cast<AActor>(UGameplayStatics::GetPlayerCharacter(this, 0));

@@ -59,6 +59,16 @@ private:
 	AAIController* EnemyController{nullptr};
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Enemy|Attack", meta=(AllowPrivateAccess="true"))
 	UAnimMontage* AttackMontage{nullptr};
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Enemy|Attack", meta=(AllowPrivateAccess="true"))
+	float MinAttackDelay{0.5f};
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Enemy|Attack", meta=(AllowPrivateAccess="true"))
+	float MaxAttackDelay{1.f};
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Enemy|Attack", meta=(AllowPrivateAccess="true"))
+	FTimerHandle AttackDelayHandle{};
+	UFUNCTION(BlueprintCallable, Category="Enemy|Attack")
+	void StartAttackDelayTimer();
+	
 	
 	void ChasePlayer();
 	void AttackPlayer();
