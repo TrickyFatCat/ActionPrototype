@@ -98,12 +98,16 @@ void AEnemyCharacter::AttackPlayer()
 		{
 			return;
 		}
-		
+
 		const int32 AnimMontageSection = FMath::RandRange(0, 2);
 		const FName SectionName = AttackSectionsNames.Array()[AnimMontageSection];
 		AnimInstance->Montage_Play(AttackMontage, 1.f);
 		AnimInstance->Montage_JumpToSection(SectionName, AttackMontage);
 	}
+
+	FVector DirectionToPlayer = PlayerCharacter->GetActorLocation() - GetActorLocation();
+	DirectionToPlayer.Normalize();
+	SetActorRotation(DirectionToPlayer.Rotation());
 }
 
 void AEnemyCharacter::ContinueAttacking()
@@ -114,9 +118,9 @@ void AEnemyCharacter::ContinueAttacking()
 	{
 		return;
 	}
-	
+
 	const float DistanceToPlayer = GetDistanceTo(PlayerCharacter);
-	
+
 	if (DistanceToPlayer < AttackRadius)
 	{
 		AttackPlayer();
