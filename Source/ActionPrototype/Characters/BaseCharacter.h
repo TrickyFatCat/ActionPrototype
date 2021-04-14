@@ -75,6 +75,10 @@ protected:
 	void OnZeroHealth();
 	UFUNCTION()
 	virtual void ProcessCharacterDeath();
+	UFUNCTION(BlueprintCallable, Category="Weapon")
+	void SwitchLeftWeaponCollision(const bool bIsEnabled) const;
+	UFUNCTION(BlueprintCallable, Category="Weapon")
+	void SwitchRightWeaponCollision(const bool bIsEnabled) const;
 
 private:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
@@ -102,8 +106,5 @@ private:
 	TSubclassOf<AWeapon> DefaultLeftWeaponClass{nullptr};
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Weapon", meta=(AllowPrivateAccess="true"))
 	TSubclassOf<AWeapon> DefaultRightWeaponClass{nullptr};
-	UFUNCTION(BlueprintCallable, Category="Weapon")
-	void SwitchLeftWeaponCollision(const bool bIsEnabled) const;
-	UFUNCTION(BlueprintCallable, Category="Weapon")
-	void SwitchRightWeaponCollision(const bool bIsEnabled) const;
+
 };
