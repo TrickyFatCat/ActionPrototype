@@ -102,6 +102,11 @@ void AEnemyCharacter::AttackPlayer()
 		return;
 	}
 
+	if (PlayerCharacter->GetCurrentHealth() <= 0.f)
+	{
+		CurrentState = EEnemyState::Idle;
+	}
+
 	if (CurrentState != EEnemyState::Attack)
 	{
 		CurrentState = EEnemyState::Attack;
@@ -113,6 +118,12 @@ void AEnemyCharacter::AttackPlayer()
 	{
 		if (AttackSectionsNames.Num() == 0)
 		{
+			return;
+		}
+
+		if (PlayerCharacter->GetCurrentHealth() <= 0.f)
+		{
+			AnimInstance->StopAllMontages(0.f);
 			return;
 		}
 
@@ -135,6 +146,11 @@ void AEnemyCharacter::ContinueAttacking()
 	if (PlayerCharacter == nullptr)
 	{
 		return;
+	}
+
+	if (PlayerCharacter->GetCurrentHealth() <= 0.f)
+	{
+		CurrentState = EEnemyState::Idle;
 	}
 
 	const float DistanceToPlayer = GetDistanceTo(PlayerCharacter);
@@ -163,6 +179,11 @@ void AEnemyCharacter::ProcessEnemyStates()
 	APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
 
 	if (PlayerCharacter == nullptr)
+	{
+		return;
+	}
+
+	if (PlayerCharacter->GetCurrentHealth() <= 0.f)
 	{
 		return;
 	}
