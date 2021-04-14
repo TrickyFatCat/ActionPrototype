@@ -190,8 +190,20 @@ void AEnemyCharacter::ProcessEnemyStates()
 		return;
 	}
 
+	const bool bIsFollowingPath = EnemyController->IsFollowingAPath();
+	
 	if (PlayerCharacter->GetCurrentHealth() <= 0.f)
 	{
+		if (CurrentState != EEnemyState::Idle)
+		{
+			CurrentState = EEnemyState::Idle;
+		}
+
+		if (bIsFollowingPath)
+		{
+			EnemyController->StopMovement();
+		}
+		
 		return;
 	}
 
@@ -202,7 +214,6 @@ void AEnemyCharacter::ProcessEnemyStates()
 		return;
 	}
 
-	const bool bIsFollowingPath = EnemyController->IsFollowingAPath();
 	const bool bIsPlayerVisible = IsPlayerVisible();
 
 	switch (CurrentState)
@@ -223,7 +234,7 @@ void AEnemyCharacter::ProcessEnemyStates()
 			}
 			break;
 		case EEnemyState::Chase:
-			if (!bIsPlayerVisible)
+			if (!bIsPlayerVisible || PlayerCharacter->GetCurrentHealth() <= 0.f)
 			{
 				if (bIsFollowingPath)
 				{
@@ -233,6 +244,7 @@ void AEnemyCharacter::ProcessEnemyStates()
 				CurrentState = EEnemyState::Idle;
 				return;
 			}
+		
 			if (DistanceToPlayer < AttackRadius)
 			{
 				if (bIsFollowingPath)
