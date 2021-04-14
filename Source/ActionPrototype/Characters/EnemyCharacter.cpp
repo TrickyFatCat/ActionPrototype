@@ -27,6 +27,12 @@ AEnemyCharacter::AEnemyCharacter()
 void AEnemyCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+
+	if (GetCurrentHealth() <= 0.f)
+	{
+		return;
+	}
+	
 	ProcessEnemyStates();
 }
 
@@ -61,6 +67,14 @@ bool AEnemyCharacter::IsPlayerVisible() const
 	}
 
 	return false;
+}
+
+void AEnemyCharacter::ProcessCharacterDeath()
+{
+	CurrentState = EEnemyState::Death;
+	SwitchLeftWeaponCollision(false);
+	SwitchRightWeaponCollision(false);
+	Super::ProcessCharacterDeath();
 }
 
 void AEnemyCharacter::StartAttackDelayTimer()

@@ -51,6 +51,7 @@ public:
 
 protected:
 	bool IsPlayerVisible() const;
+	virtual void ProcessCharacterDeath() override;
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Enemy|State", meta=(AllowPrivateAccess="true"))
