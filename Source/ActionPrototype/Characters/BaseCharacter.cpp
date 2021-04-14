@@ -4,6 +4,7 @@
 #include "BaseCharacter.h"
 #include "ActionPrototype/ActorComponents/BaseResourceComponent.h"
 #include "ActionPrototype/Actors/Weapon.h"
+#include "Components/CapsuleComponent.h"
 
 ABaseCharacter::ABaseCharacter()
 {
@@ -98,6 +99,12 @@ void ABaseCharacter::BroadcastCurrentHealthDecreased(const float Amount, const f
 	OnCurrentHealthDecreased.Broadcast(Amount, CurrentHealth);
 }
 
+void ABaseCharacter::ProcessCharacterDeath()
+{
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	OnDeath.Broadcast();
+}
+
 void ABaseCharacter::SwitchLeftWeaponCollision(const bool bIsEnabled) const
 {
 	if (LeftWeapon == nullptr)
@@ -175,6 +182,7 @@ void ABaseCharacter::DecreaseCurrentHealth(
 	if (CurrentHealth <= 0.f)
 	{
 		OnZeroHealth();
+		ProcessCharacterDeath();
 	}
 }
 

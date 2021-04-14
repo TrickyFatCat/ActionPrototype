@@ -18,6 +18,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnMaxHealthIncreased, float, Amoun
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnMaxHealthDecreased, float, Amount, float, NewMaxHealth);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCharacterDeath);
+
 UCLASS(Abstract)
 class ACTIONPROTOTYPE_API ABaseCharacter : public ACharacter
 {
@@ -57,6 +59,8 @@ public:
 	FOnMaxHealthIncreased OnMaxHealthIncreased;
 	UPROPERTY(BlueprintAssignable, Category="Character Health")
 	FOnMaxHealthDecreased OnMaxHealthDecreased;
+	UPROPERTY(BlueprintAssignable, Category="Character Health")
+	FOnCharacterDeath OnDeath;
 
 	UFUNCTION(BlueprintCallable, Category="Weapon")
 	void EquipWeapon(const TSubclassOf<AWeapon> NewWeapon, const EWeaponSlot WeaponSlot);
@@ -66,18 +70,21 @@ public:
 	AWeapon* GetRightWeapon() const;
 protected:
 	virtual void BeginPlay() override;
-	
+
 	UFUNCTION(BlueprintImplementableEvent, Category="Character Health")
 	void OnZeroHealth();
+	UFUNCTION()
+	virtual void ProcessCharacterDeath();
 
 private:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	UBaseResourceComponent* HealthComponent{nullptr};
-	
+
 	UFUNCTION()
 	void BroadcastCurrentHealthIncreased(const float Amount, const float CurrentHealth);
 	UFUNCTION()
 	void BroadcastCurrentHealthDecreased(const float Amount, const float CurrentHealth);
+
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="Weapon", meta=(AllowPrivateAccess="true"))
 	UChildActorComponent* LeftWeaponComponent{nullptr};

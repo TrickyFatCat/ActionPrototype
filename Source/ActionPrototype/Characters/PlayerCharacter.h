@@ -96,6 +96,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void ProcessCharacterDeath() override;
 
 private:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category="Components", meta=(AllowPrivateAccess = "true"))

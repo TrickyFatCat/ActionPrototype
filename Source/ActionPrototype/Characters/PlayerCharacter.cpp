@@ -74,6 +74,12 @@ void APlayerCharacter::BeginPlay()
 	GetCapsuleComponent()->OnComponentEndOverlap.AddDynamic(this, &APlayerCharacter::RemoveFromInteractionQueue);
 }
 
+void APlayerCharacter::ProcessCharacterDeath()
+{
+	DisableInput(Cast<APlayerController>(GetController()));
+	Super::ProcessCharacterDeath();
+}
+
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
