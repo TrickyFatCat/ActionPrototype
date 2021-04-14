@@ -84,6 +84,12 @@ void AEnemyCharacter::ChasePlayer()
 		return;
 	}
 
+	if (Cast<APlayerCharacter>(PlayerActor)->GetCurrentHealth() <= 0.f)
+	{
+		CurrentState = EEnemyState::Idle;
+		return;
+	}
+
 	if (CurrentState != EEnemyState::Chase)
 	{
 		CurrentState = EEnemyState::Chase;
@@ -151,6 +157,7 @@ void AEnemyCharacter::ContinueAttacking()
 	if (PlayerCharacter->GetCurrentHealth() <= 0.f)
 	{
 		CurrentState = EEnemyState::Idle;
+		return;
 	}
 
 	const float DistanceToPlayer = GetDistanceTo(PlayerCharacter);
@@ -201,7 +208,7 @@ void AEnemyCharacter::ProcessEnemyStates()
 	switch (CurrentState)
 	{
 		case EEnemyState::Idle:
-			if (!bIsPlayerVisible)
+			if (!bIsPlayerVisible || PlayerCharacter->GetCurrentHealth() <= 0.f)
 			{
 				return;
 			}
