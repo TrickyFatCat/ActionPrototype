@@ -89,7 +89,7 @@ void ABasePickupItem::AnimateMeshRotation() const
 {
 	const FRotator CurrentRotation = PickupMesh->GetComponentRotation();
 	const FRotator NewRotation = CurrentRotation + MeshRotationSpeed * AnimationSpeed;
-	PickupMesh->SetWorldRotation(NewRotation);
+	PickupMesh->SetRelativeRotation(NewRotation);
 }
 
 void ABasePickupItem::AnimatePickupMesh(const float AnimationProgress) const
