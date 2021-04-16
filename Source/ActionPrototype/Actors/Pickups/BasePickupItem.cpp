@@ -18,9 +18,12 @@ ABasePickupItem::ABasePickupItem()
 
 	TriggerVolume = CreateDefaultSubobject<USphereComponent>(TEXT("Pickup Collision"));
 	RootComponent = TriggerVolume;
+	TriggerVolume->SetCanEverAffectNavigation(false);
 
 	PickupMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Pickup Mesh"));
 	PickupMesh->SetupAttachment(RootComponent);
+	PickupMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	PickupMesh->SetGenerateOverlapEvents(false);
 
 	PickupIdleParticles = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("Pickup Particle"));
 	PickupIdleParticles->SetupAttachment(RootComponent);
